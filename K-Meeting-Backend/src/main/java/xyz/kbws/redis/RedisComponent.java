@@ -35,4 +35,12 @@ public class RedisComponent {
         redisUtils.setEx(RedisConstant.WS_TOKEN + userVO.getToken(), userVO, RedisConstant.DAY);
         redisUtils.setEx(RedisConstant.WS_TOKEN_USERID + userVO.getId(), userVO.getToken(), RedisConstant.DAY);
     }
+
+    public UserVO getUserVO(String token) {
+        return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN + token);
+    }
+
+    public UserVO getUserVOById(Integer userId) {
+        return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN_USERID + userId);
+    }
 }

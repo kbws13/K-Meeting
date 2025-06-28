@@ -42,6 +42,9 @@ message:
   handle:
     channel: redis
 
+ws:
+  prot: 8102
+
 # 接口文档配置
 knife4j:
   enable: true
