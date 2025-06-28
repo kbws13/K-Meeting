@@ -71,7 +71,7 @@ public class RedisUtil<V> {
     public boolean setEx(String key, V value, long time) {
         try {
             if (time > 0) {
-                redisTemplate.opsForValue().set(key, value, time, TimeUnit.MILLISECONDS);
+                redisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
             } else {
                 set(key, value);
             }
