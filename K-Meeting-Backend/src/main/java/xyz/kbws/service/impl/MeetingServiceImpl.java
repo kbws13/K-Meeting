@@ -2,9 +2,14 @@ package xyz.kbws.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import xyz.kbws.model.entity.Meeting;
+import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.service.MeetingService;
 import xyz.kbws.mapper.MeetingMapper;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
 
 /**
 * @author housenyao
@@ -14,7 +19,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     implements MeetingService{
+    
+    @Resource
+    private MeetingMapper meetingMapper;
 
+    @Override
+    public List<Meeting> findListByPage(MeetingQuery meetingQuery) {
+        return meetingMapper.findListByPage(meetingQuery);
+    }
 }
 
 

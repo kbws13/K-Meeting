@@ -22,4 +22,29 @@
         id,meetingNo,name,createUserId,joinType,joinPassword,
         startTime,endTime,status,createTime,updateTime
     </sql>
+    
+    <sql id="query_condition">
+        <where>
+            1=1
+            <if test="query.userId != null">
+                and m.id in (
+                    select id from meetingMember mm where mm.userId = #{query.userId} and mm.status = 1
+                )
+            </if>
+        </where>
+    </sql>
+    
+    <select id="findListByPage" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        <if test="query.queryMemberCount">
+            ,(select count(1) from meetingMember mm where mm.meetingId = m.id) memberCount
+        </if>
+        from meeting m
+        <include refid="query_condition"/>
+        <if test="query.orderBy != null">
+            order by #{query.sortField} #{query.sortOrder}
+        </if>
+        LIMIT #{query.pageSize} OFFSET ${(query.current - 1) * query.pageSize}
+    </select>
 </mapper>
