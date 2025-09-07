@@ -1,6 +1,5 @@
 package xyz.kbws.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.util.Date;
@@ -14,13 +13,11 @@ public class MeetingMember {
     /**
      * 会议 ID
      */
-    @TableId
     private Integer meetingId;
 
     /**
      * 用户 ID
      */
-    @TableId
     private Integer userId;
 
     /**

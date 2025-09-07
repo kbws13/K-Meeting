@@ -37,12 +37,12 @@
     <select id="findListByPage" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
-        <if test="query.queryMemberCount">
+        <if test="query.queryMeetingMemberCount">
             ,(select count(1) from meetingMember mm where mm.meetingId = m.id) memberCount
         </if>
         from meeting m
         <include refid="query_condition"/>
-        <if test="query.orderBy != null">
+        <if test="query.sortField != null">
             order by #{query.sortField} #{query.sortOrder}
         </if>
         LIMIT #{query.pageSize} OFFSET ${(query.current - 1) * query.pageSize}
