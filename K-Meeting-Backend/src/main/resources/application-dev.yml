@@ -20,7 +20,7 @@ spring:
     database: 0
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}
-    password: ${REDIS_PASSWORD}
+#    password: ${REDIS_PASSWORD}
     jedis:
       pool:
         max-active: 20

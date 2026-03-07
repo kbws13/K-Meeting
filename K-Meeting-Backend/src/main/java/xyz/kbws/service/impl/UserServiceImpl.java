@@ -15,10 +15,13 @@ import xyz.kbws.model.entity.User;
 import xyz.kbws.model.enums.UserStatusEnum;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtil;
 
 import javax.annotation.Resource;
+
+import static xyz.kbws.utils.Util.shortCode6;
 
 /**
 * @author housenyao
@@ -67,8 +70,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         UserVO userVO = new UserVO();
         BeanUtil.copyProperties(user, userVO);
-        userVO.setToken(JwtUtil.createToken(userVO.getId()));
-        redisComponent.saveUserVO(userVO);
+        String secretUserId = shortCode6(user.getId().toString());
+        userVO.setId(secretUserId);
+        userVO.setToken(JwtUtil.createToken(secretUserId));
+        LoginUser loginUser = new LoginUser();
+        BeanUtil.copyProperties(userVO, loginUser);
+        loginUser.setUserId(user.getId());
+        redisComponent.saveUserVO(loginUser);
         return userVO;
     }
 }

@@ -13,6 +13,7 @@ create table user
     meetingNo     varchar(10) comment '个人会议号',
     createTime    datetime    not null default CURRENT_TIMESTAMP comment '创建时间',
     updateTime    datetime    not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP comment '更新时间',
+    userRole varchar(20) not null default 'user' comment 'user/admin/ban',
     lastLoginTime bigint(20) comment '最后登录时间',
     lastOffTime   bigint(20) comment '最后离开时间',
     unique key idx_key_email (email)

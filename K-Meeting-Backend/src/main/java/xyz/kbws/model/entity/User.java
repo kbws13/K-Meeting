@@ -49,6 +49,11 @@ public class User {
     private String meetingNo;
 
     /**
+     * 权限
+     */
+    private String userRole;
+
+    /**
      * 创建时间
      */
     private Date createTime;

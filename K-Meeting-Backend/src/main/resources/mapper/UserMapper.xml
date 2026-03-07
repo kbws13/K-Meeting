@@ -12,6 +12,7 @@
             <result property="password" column="password" />
             <result property="status" column="status" />
             <result property="meetingNo" column="meetingNo" />
+            <result property="userRole" column="userRole"/>
             <result property="createTime" column="createTime" />
             <result property="updateTime" column="updateTime" />
             <result property="lastLoginTime" column="lastLoginTime" />

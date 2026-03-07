@@ -1,5 +1,6 @@
 package xyz.kbws.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 import xyz.kbws.model.entity.Meeting;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -14,7 +15,7 @@ import java.util.List;
 * @Entity xyz.kbws.model.entity.Meeting
 */
 public interface MeetingMapper extends BaseMapper<Meeting> {
-    List<Meeting> findListByPage(@Param("query") MeetingQuery meetingQuery);
+    List<Meeting> findListByPage(Page<Meeting> page, @Param("query") MeetingQuery meetingQuery);
 }
 
 

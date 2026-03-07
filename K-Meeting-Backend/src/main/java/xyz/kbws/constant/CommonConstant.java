@@ -20,4 +20,6 @@ public interface CommonConstant {
 
     String APP_NAME = "KMeetingSetup.";
     String APP_EXE_SUFFIX = ".exe";
+
+    String CURRENT_USER = "CURRENT_USER";
 }

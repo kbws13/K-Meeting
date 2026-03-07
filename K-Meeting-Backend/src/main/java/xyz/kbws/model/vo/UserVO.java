@@ -11,8 +11,8 @@ import java.io.Serializable;
  */
 @Data
 public class UserVO implements Serializable {
-    
-    private Integer id;
+
+    private String id;
 
     /**
      * 邮箱
@@ -38,9 +38,9 @@ public class UserVO implements Serializable {
      * 个人会议号
      */
     private String meetingNo;
-    
-    private String currentMeetingNo;
-    
+
+    private Integer currentMeetingId;
+
     private String currentNickName;
 
     /**
@@ -52,6 +52,11 @@ public class UserVO implements Serializable {
      * 最后离开时间
      */
     private Long lastOffTime;
+
+    /**
+     * 用户身份
+     */
+    private String userRole;
 
     private String token;
 

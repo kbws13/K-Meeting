@@ -57,7 +57,7 @@ public class HandlerTokenValidation extends SimpleChannelInboundHandler<FullHttp
         if (StrUtil.isEmpty(token)) {
             return null;
         }
-        return redisComponent.getUserVO(token);
+        return redisComponent.getLoginUser(token);
     }
 
     private void sendErrorResponse(ChannelHandlerContext context) {

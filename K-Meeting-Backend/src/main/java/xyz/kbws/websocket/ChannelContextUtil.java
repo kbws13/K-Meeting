@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.User;
-import xyz.kbws.model.enums.MessageTypeEnum;
+import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 
@@ -54,12 +54,12 @@ public class ChannelContextUtil {
             user.setLastLoginTime(System.currentTimeMillis());
             userMapper.updateById(user);
 
-            UserVO userVO = redisComponent.getUserVOById(Integer.parseInt(userId));
-            if (userVO.getCurrentMeetingNo() == null) {
+            UserVO userVO = redisComponent.getLoginUserById(Integer.parseInt(userId));
+            if (userVO.getCurrentMeetingId() == null) {
                 return;
             }
             // 自动加入会议
-            addMeetingRoom(userVO.getCurrentMeetingNo(), userId);
+            addMeetingRoom(String.valueOf(userVO.getCurrentMeetingId()), userId);
         } catch (Exception e) {
             log.error("初始化连接失败: {}", e.getMessage());
         }
@@ -82,7 +82,7 @@ public class ChannelContextUtil {
     }
 
     public void sendMessage(MessageSendDto messageSendDto) {
-        if (MessageTypeEnum.USER.getType().equals(messageSendDto.getMessageSend2Type())) {
+        if (MessageSendTypeEnum.USER.getType().equals(messageSendDto.getMessageSend2Type())) {
             sendMessage2User(messageSendDto);
         } else {
             sendMessage2Group(messageSendDto);

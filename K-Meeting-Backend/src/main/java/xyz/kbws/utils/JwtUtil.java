@@ -15,8 +15,8 @@ public class JwtUtil {
     private static final String ASCII_UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom random = new SecureRandom();
 
-    public static String createToken(Integer userId) {
-        String hashValue = md5Hash(String.valueOf(userId));
+    public static String createToken(String userId) {
+        String hashValue = md5Hash(userId);
         return String.format("%s:%s:%s", generateRandomPrefix(), hashValue, generateRandomSuffix());
     }
 
