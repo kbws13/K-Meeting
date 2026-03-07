@@ -56,6 +56,42 @@ public class RedisUtil<V> {
         }
     }
 
+    public boolean hset(String key, String field, V value) {
+        try {
+            redisTemplate.opsForHash().put(key, field, value);
+            return true;
+        } catch (Exception e) {
+            log.error("redis hset error: key:{}, field:{}, value:{}", key, field, value);
+            return false;
+        }
+    }
+
+    public <T> List<T> hvals(String key, Class<T> clazz) {
+        try {
+            List<Object> values = redisTemplate.opsForHash().values(key);
+            if (values == null || values.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return values.stream()
+                    .map(clazz::cast)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("redis hvals error: key:{}", key, e);
+            return Collections.emptyList();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public V hget(String key, String field) {
+        try {
+            Object value = redisTemplate.opsForHash().get(key, field);
+            return value == null ? null : (V) value;
+        } catch (Exception e) {
+            log.error("redis hget error: key:{}, field:{}", key, field, e);
+            return null;
+        }
+    }
+
     public boolean keyExists(String key) {
         return redisTemplate.hasKey(key);
     }

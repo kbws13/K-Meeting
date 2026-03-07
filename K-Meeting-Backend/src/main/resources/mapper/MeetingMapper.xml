@@ -43,7 +43,7 @@
         from meeting m
         <include refid="query_condition"/>
         <if test="query.sortField != null">
-            order by ${query.sortField} #{query.sortOrder}
+            order by ${query.sortField} ${query.sortOrder}
         </if>
     </select>
 </mapper>

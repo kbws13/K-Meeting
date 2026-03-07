@@ -13,6 +13,8 @@ import xyz.kbws.common.ResultUtil;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
+import xyz.kbws.model.dto.meeting.JoinDto;
+import xyz.kbws.model.dto.meeting.PreJoinDto;
 import xyz.kbws.model.dto.meeting.QuickMeetingDto;
 import xyz.kbws.model.entity.Meeting;
 import xyz.kbws.model.query.MeetingQuery;
@@ -56,7 +58,7 @@ public class MeetingController {
         return ResultUtil.success(page);
     }
 
-    @ApiOperation("加入会议")
+    @ApiOperation("创建会议")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/quick")
     public BaseResponse<Integer> quickMeeting(@RequestBody QuickMeetingDto quickMeetingDto, @CurrentUser LoginUser loginUser) {
@@ -75,5 +77,21 @@ public class MeetingController {
         loginUser.setCurrentNickName(loginUser.getCurrentNickName());
         redisComponent.resetUserVO(loginUser);
         return ResultUtil.success(meeting.getId());
+    }
+
+    @ApiOperation("预加入会议")
+    @PostMapping("/preJoin")
+    public BaseResponse<Integer> preJoin(@RequestBody PreJoinDto preJoinDto, @CurrentUser LoginUser loginUser) {
+        loginUser.setCurrentMeetingId(preJoinDto.getMeetingId());
+        Integer meetingId = meetingService.preJoinMeeting(preJoinDto.getMeetingId(), loginUser, preJoinDto.getPassword());
+        return ResultUtil.success(meetingId);
+    }
+
+    @ApiOperation("加入会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/join")
+    public BaseResponse<Boolean> join(@RequestBody JoinDto joinDto, @CurrentUser LoginUser userVO) {
+        meetingService.join(userVO, userVO.getCurrentMeetingId(), joinDto.getVideoOpen());
+        return ResultUtil.success(true);
     }
 }

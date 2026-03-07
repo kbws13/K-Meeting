@@ -5,6 +5,7 @@ import xyz.kbws.model.entity.Meeting;
 import com.baomidou.mybatisplus.extension.service.IService;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.model.vo.UserVO;
+import xyz.kbws.redis.entity.LoginUser;
 
 /**
 * @author housenyao
@@ -16,5 +17,7 @@ public interface MeetingService extends IService<Meeting> {
 
     void quickMeeting(Meeting meeting, String nickName);
 
-    void join(UserVO userVO, String meetingId, Boolean openVideo);
+    void join(LoginUser userVO, Integer meetingId, Boolean openVideo);
+
+    Integer preJoinMeeting(Integer meetingId, LoginUser loginUser, String password);
 }

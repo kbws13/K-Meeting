@@ -2,10 +2,14 @@ package xyz.kbws.redis;
 
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.RedisConstant;
+import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.entity.LoginUser;
 
 import javax.annotation.Resource;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author kbws
@@ -68,5 +72,19 @@ public class RedisComponent {
 
     public void resetUserVO(LoginUser loginUser) {
         this.saveUserVO(loginUser);
+    }
+
+    public void addMeeting(Integer meetingId, MeetingMemberObj meetingMemberObj) {
+        redisUtils.hset(RedisConstant.MEETING_ROOM + meetingId.toString(), meetingMemberObj.getUserId().toString(), meetingMemberObj);
+    }
+
+    public List<MeetingMemberObj> getMeetingMemberList(Integer meetingId) {
+        List<MeetingMemberObj> meetingMemberObjList = redisUtils.hvals(RedisConstant.MEETING_ROOM + meetingId.toString(), MeetingMemberObj.class);
+        meetingMemberObjList = meetingMemberObjList.stream().sorted(Comparator.comparing(MeetingMemberObj::getJoinTime)).collect(Collectors.toList());
+        return meetingMemberObjList;
+    }
+
+    public MeetingMemberObj getMeetingMember(Integer meetingId, Integer userId) {
+        return (MeetingMemberObj) redisUtils.hget(RedisConstant.MEETING_ROOM + meetingId.toString(), userId.toString());
     }
 }

@@ -18,4 +18,17 @@
         meetingId,userId,nickName,lastJoinTime,status,memberType,
         meetingStatus
     </sql>
+
+    <insert id="insertOrUpdate">
+        INSERT INTO meetingMember (meetingId, userId, nickName, lastJoinTime, status, memberType, meetingStatus)
+        VALUES (#{meetingId}, #{userId}, #{nickName}, #{lastJoinTime}, #{status}, #{memberType}, #{meetingStatus})
+        ON DUPLICATE KEY UPDATE
+        <trim suffixOverrides=",">
+            <if test="nickName != null">nickName = #{nickName},</if>
+            <if test="lastJoinTime != null">lastJoinTime = #{lastJoinTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="memberType != null">memberType = #{memberType},</if>
+            <if test="meetingStatus != null">meetingStatus = #{meetingStatus},</if>
+        </trim>
+    </insert>
 </mapper>

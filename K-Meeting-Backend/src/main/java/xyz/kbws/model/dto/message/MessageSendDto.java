@@ -15,8 +15,8 @@ import java.io.Serializable;
 public class MessageSendDto<T> implements Serializable {
     
     private Integer messageSend2Type;
-    
-    private String meetingId;
+
+    private Integer meetingId;
     
     private Integer messageType;
     

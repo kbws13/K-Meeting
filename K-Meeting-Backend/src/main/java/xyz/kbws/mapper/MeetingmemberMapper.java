@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity xyz.kbws.model.entity.Meetingmember
 */
 public interface MeetingmemberMapper extends BaseMapper<MeetingMember> {
-
+    int insertOrUpdate(MeetingMember meetingMember);
 }
 
 
