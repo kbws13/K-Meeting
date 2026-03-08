@@ -10,8 +10,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.websocket.ChannelContextUtil;
 
 import javax.annotation.Resource;
@@ -26,13 +26,13 @@ import java.util.List;
 @Component
 @ChannelHandler.Sharable
 public class HandlerTokenValidation extends SimpleChannelInboundHandler<FullHttpRequest> {
-    
+
     @Resource
     private RedisComponent redisComponent;
-    
+
     @Resource
     private ChannelContextUtil channelContextUtil;
-    
+
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, FullHttpRequest fullHttpRequest) {
         String uri = fullHttpRequest.uri();
@@ -43,17 +43,17 @@ public class HandlerTokenValidation extends SimpleChannelInboundHandler<FullHttp
             return;
         }
         String token = tokens.get(0);
-        UserVO userVO = checkUserVO(token);
+        LoginUser userVO = checkUserVO(token);
         if (userVO == null) {
             log.error("校验 token 失败: {}", token);
             sendErrorResponse(channelHandlerContext);
             return;
         }
         channelHandlerContext.fireChannelRead(fullHttpRequest.retain());
-        channelContextUtil.addContext(String.valueOf(userVO.getId()), channelHandlerContext.channel());
+        channelContextUtil.addContext(userVO.getUserId(), channelHandlerContext.channel());
     }
 
-    private UserVO checkUserVO(String token) {
+    private LoginUser checkUserVO(String token) {
         if (StrUtil.isEmpty(token)) {
             return null;
         }

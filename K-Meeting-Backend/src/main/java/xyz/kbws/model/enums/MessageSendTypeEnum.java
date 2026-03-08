@@ -10,7 +10,8 @@ import lombok.Getter;
 @Getter
 public enum MessageSendTypeEnum {
     USER(0, "个人"),
-    GROUP(1, "群")
+    GROUP(1, "群"),
+    PEER(2, "发送 peer"),
     ;
 
     private Integer type;

@@ -40,7 +40,7 @@ mybatis-plus:
 
 message:
   handle:
-    channel: redis
+    channel: rabbitmq
 
 ws:
   prot: 8102

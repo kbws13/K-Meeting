@@ -28,17 +28,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class ChannelContextUtil {
-    
+
     @Resource
     private RedisComponent redisComponent;
 
     @Resource
     private UserMapper userMapper;
-    
-    public static final ConcurrentHashMap<String, Channel> USER_CONTEXT_MAP = new ConcurrentHashMap<>();
+
+    public static final ConcurrentHashMap<Integer, Channel> USER_CONTEXT_MAP = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String, ChannelGroup> MEETING_ROOM_CONTEXT_MAP = new ConcurrentHashMap<>();
 
-    public void addContext(String userId, Channel channel) {
+    public void addContext(Integer userId, Channel channel) {
         try {
             String channelId = channel.id().toString();
             AttributeKey attributeKey;
@@ -50,11 +50,11 @@ public class ChannelContextUtil {
             channel.attr(attributeKey).set(userId);
             USER_CONTEXT_MAP.put(userId, channel);
             User user = new User();
-            user.setId(Integer.parseInt(userId));
+            user.setId(userId);
             user.setLastLoginTime(System.currentTimeMillis());
             userMapper.updateById(user);
 
-            UserVO userVO = redisComponent.getLoginUserById(Integer.parseInt(userId));
+            UserVO userVO = redisComponent.getLoginUserById(userId);
             if (userVO.getCurrentMeetingId() == null) {
                 return;
             }
@@ -65,7 +65,7 @@ public class ChannelContextUtil {
         }
     }
 
-    public void addMeetingRoom(String meetingId, String userId) {
+    public void addMeetingRoom(String meetingId, Integer userId) {
         Channel userChannel = USER_CONTEXT_MAP.get(userId);
         if (userChannel == null) {
             return;
@@ -86,25 +86,25 @@ public class ChannelContextUtil {
             sendMessage2User(messageSendDto);
         } else {
             sendMessage2Group(messageSendDto);
-        } 
+        }
     }
 
     public void closeContext(String userId) {
         if (StrUtil.isEmpty(userId)) {
             return;
         }
-        Channel channel = USER_CONTEXT_MAP.get(userId);
-        USER_CONTEXT_MAP.remove(userId);
+        Channel channel = USER_CONTEXT_MAP.get(Integer.parseInt(userId));
+        USER_CONTEXT_MAP.remove(Integer.parseInt(userId));
         if (channel != null) {
             channel.close();
         }
     }
-    
+
     private void sendMessage2User(MessageSendDto messageSendDto) {
         if (messageSendDto.getReceiveUserId() == null) {
             return;
         }
-        Channel channel = USER_CONTEXT_MAP.get(messageSendDto.getReceiveUserId());
+        Channel channel = USER_CONTEXT_MAP.get(Integer.parseInt(messageSendDto.getReceiveUserId()));
         if (channel == null) {
             return;
         }

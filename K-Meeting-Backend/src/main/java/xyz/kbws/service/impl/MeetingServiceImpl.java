@@ -1,7 +1,6 @@
 package xyz.kbws.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,6 +20,7 @@ import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.MeetingMemberService;
 import xyz.kbws.service.MeetingService;
 import xyz.kbws.websocket.ChannelContextUtil;
+import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -46,6 +46,9 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
     @Resource
     private ChannelContextUtil channelContextUtil;
+    
+    @Resource
+    private MessageHandler messageHandler;
 
     @Override
     public Page<Meeting> findByPage(MeetingQuery meetingQuery) {
@@ -79,7 +82,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         // 加入会议
         this.addMeeting(meetingId, loginUser.getUserId(), loginUser.getNickName(), loginUser.getSex(), memberTypeEnum, openVideo);
         // 加入 ws 房间
-        channelContextUtil.addMeetingRoom(meetingId.toString(), String.valueOf(loginUser.getId()));
+        channelContextUtil.addMeetingRoom(meetingId.toString(), loginUser.getUserId());
         // 发生 ws 消息
         MeetingJoinObj meetingJoinObj = new MeetingJoinObj();
         meetingJoinObj.setNewMember(redisComponent.getMeetingMember(meetingId, loginUser.getUserId()));
@@ -89,7 +92,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         messageSendDto.setMessageContent(meetingJoinObj);
         messageSendDto.setMeetingId(meetingId);
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
-        channelContextUtil.sendMessage(messageSendDto);
+        messageHandler.sendMessage(messageSendDto);
     }
 
     @Override

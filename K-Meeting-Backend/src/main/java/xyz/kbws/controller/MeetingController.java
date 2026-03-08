@@ -16,12 +16,14 @@ import xyz.kbws.exception.BusinessException;
 import xyz.kbws.model.dto.meeting.JoinDto;
 import xyz.kbws.model.dto.meeting.PreJoinDto;
 import xyz.kbws.model.dto.meeting.QuickMeetingDto;
+import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
+import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.query.MeetingQuery;
-import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.MeetingService;
+import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
 
@@ -40,6 +42,9 @@ public class MeetingController {
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private MessageHandler messageHandler;
 
     @GetMapping("/getCurrentMeeting")
     public BaseResponse getCurrentMeeting() {
@@ -92,6 +97,21 @@ public class MeetingController {
     @PostMapping("/join")
     public BaseResponse<Boolean> join(@RequestBody JoinDto joinDto, @CurrentUser LoginUser userVO) {
         meetingService.join(userVO, userVO.getCurrentMeetingId(), joinDto.getVideoOpen());
+        return ResultUtil.success(true);
+    }
+
+    @ApiOperation("测试发送消息")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/testSendMessage")
+    public BaseResponse<Boolean> testSendMessage(@CurrentUser LoginUser loginUser) {
+        MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+        messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
+        messageSendDto.setReceiveUserId(loginUser.getUserId().toString());
+        messageSendDto.setMessageContent("测试发送消息");
+        messageSendDto.setSendUserId(loginUser.getUserId().toString());
+        messageSendDto.setSendUserNickName(loginUser.getNickName());
+        messageSendDto.setSendTime(System.currentTimeMillis());
+        messageHandler.sendMessage(messageSendDto);
         return ResultUtil.success(true);
     }
 }
