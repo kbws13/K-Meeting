@@ -13,6 +13,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AppConfig {
     
-    @Value("${ws.prot}")
+    @Value("${ws.port}")
     private Integer port;
 }

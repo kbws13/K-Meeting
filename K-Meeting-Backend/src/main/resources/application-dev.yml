@@ -43,7 +43,7 @@ message:
     channel: rabbitmq
 
 ws:
-  prot: 8102
+  port: 8102
 
 # 接口文档配置
 knife4j:

@@ -1,5 +1,6 @@
 package xyz.kbws.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.util.Date;
@@ -8,6 +9,7 @@ import java.util.Date;
  * 会议成员表
  * @TableName meetingMember
  */
+@TableName(value ="meetingMember")
 @Data
 public class MeetingMember {
     /**
