@@ -106,9 +106,9 @@ public class MeetingController {
     public BaseResponse<Boolean> testSendMessage(@CurrentUser LoginUser loginUser) {
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
-        messageSendDto.setReceiveUserId(loginUser.getUserId().toString());
+        messageSendDto.setReceiveUserId(loginUser.getUserId());
         messageSendDto.setMessageContent("测试发送消息");
-        messageSendDto.setSendUserId(loginUser.getUserId().toString());
+        messageSendDto.setSendUserId(loginUser.getUserId());
         messageSendDto.setSendUserNickName(loginUser.getNickName());
         messageSendDto.setSendTime(System.currentTimeMillis());
         messageHandler.sendMessage(messageSendDto);

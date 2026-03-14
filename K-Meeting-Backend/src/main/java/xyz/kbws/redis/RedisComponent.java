@@ -24,7 +24,7 @@ public class RedisComponent {
     /**
      * 构建 userId key
      */
-    private String buildUserIdKey(String userId) {
+    private String buildUserIdKey(Integer userId) {
         return RedisConstant.WS_TOKEN_USERID + userId;
     }
 
@@ -57,9 +57,9 @@ public class RedisComponent {
     public void saveUserVO(LoginUser loginUser) {
         String token = loginUser.getToken();
         // token -> userVO
-        redisUtils.setEx(RedisConstant.WS_TOKEN + loginUser.getToken(), loginUser, RedisConstant.DAY);
+        redisUtils.setEx(RedisConstant.WS_TOKEN + token, loginUser, RedisConstant.DAY);
         // userId -> token
-        redisUtils.setEx(buildUserIdKey(loginUser.getId()), token, RedisConstant.DAY);
+        redisUtils.setEx(buildUserIdKey(loginUser.getUserId()), token, RedisConstant.DAY);
     }
 
     public LoginUser getLoginUser(String token) {
@@ -67,7 +67,11 @@ public class RedisComponent {
     }
 
     public LoginUser getLoginUserById(Integer userId) {
-        return (LoginUser) redisUtils.get(RedisConstant.WS_TOKEN_USERID + userId);
+        String token = (String) redisUtils.get(buildUserIdKey(userId));
+        if (token == null) {
+            return null;
+        }
+        return getLoginUser(token);
     }
 
     public void resetUserVO(LoginUser loginUser) {

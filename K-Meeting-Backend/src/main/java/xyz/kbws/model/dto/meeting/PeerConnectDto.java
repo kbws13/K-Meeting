@@ -14,9 +14,9 @@ public class PeerConnectDto implements Serializable {
     
     private String token;
     
-    private String sendUserId;
+    private Integer sendUserId;
     
-    private String receiveUserId;
+    private Integer receiveUserId;
     
     private String signalType;
     

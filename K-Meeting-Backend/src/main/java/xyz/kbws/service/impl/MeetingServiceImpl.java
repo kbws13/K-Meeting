@@ -82,7 +82,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         // 加入会议
         this.addMeeting(meetingId, loginUser.getUserId(), loginUser.getNickName(), loginUser.getSex(), memberTypeEnum, openVideo);
         // 加入 ws 房间
-        channelContextUtil.addMeetingRoom(meetingId.toString(), loginUser.getUserId());
+        channelContextUtil.addMeetingRoom(meetingId, loginUser.getUserId());
         // 发生 ws 消息
         MeetingJoinObj meetingJoinObj = new MeetingJoinObj();
         meetingJoinObj.setNewMember(redisComponent.getMeetingMember(meetingId, loginUser.getUserId()));

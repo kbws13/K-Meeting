@@ -20,13 +20,13 @@ public class MessageSendDto<T> implements Serializable {
     
     private Integer messageType;
     
-    private String sendUserId;
+    private Integer sendUserId;
     
     private String sendUserNickName;
     
     private T messageContent;
     
-    private String receiveUserId;
+    private Integer receiveUserId;
     
     private Long sendTime;
     
