@@ -1,6 +1,8 @@
 package xyz.kbws.controller;
 
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,18 +20,22 @@ import xyz.kbws.model.dto.meeting.PreJoinDto;
 import xyz.kbws.model.dto.meeting.QuickMeetingDto;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
+import xyz.kbws.model.entity.MeetingMember;
 import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.enums.MeetingStatusEnum;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
+import xyz.kbws.service.MeetingMemberService;
 import xyz.kbws.service.MeetingService;
 import xyz.kbws.utils.UserIdCodec;
 import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author kbws
@@ -49,6 +55,9 @@ public class MeetingController {
 
     @Resource
     private MessageHandler messageHandler;
+
+    @Resource
+    private MeetingMemberService meetingMemberService;
 
     @ApiOperation("当前正在进行的会议")
     @GetMapping("/getCurrentMeeting")
@@ -145,6 +154,32 @@ public class MeetingController {
         Integer targetUserId = UserIdCodec.decode(userId);
         Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
         return ResultUtil.success(res);
+    }
+
+    @ApiOperation("删除会议记录")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/deleteRecord")
+    public BaseResponse<Boolean> deleteRecord(@CurrentUser LoginUser loginUser, @NotEmpty Integer meetingId) {
+        LambdaUpdateWrapper<MeetingMember> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.eq(MeetingMember::getMeetingId, meetingId)
+                .eq(MeetingMember::getUserId, loginUser.getUserId())
+                .set(MeetingMember::getStatus, MeetingMemberStatus.DEL_MEETING.getStatus());
+        boolean res = meetingMemberService.update(null, lambdaUpdateWrapper);
+        return ResultUtil.success(res);
+    }
+
+    @ApiOperation("会议成员列表")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/members")
+    public BaseResponse<List<MeetingMember>> members(@CurrentUser LoginUser loginUser, @NotEmpty Integer meetingId) {
+        LambdaQueryWrapper<MeetingMember> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MeetingMember::getMeetingId, meetingId);
+        List<MeetingMember> members = meetingMemberService.list(queryWrapper);
+        Optional<MeetingMember> first = members.stream().filter(item -> item.getUserId().equals(loginUser.getUserId())).findFirst();
+        if (!first.isPresent()) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        return ResultUtil.success(members);
     }
 
     @ApiOperation("测试发送消息")
