@@ -13,7 +13,7 @@ create table user
     meetingNo     varchar(10) comment '个人会议号',
     createTime    datetime    not null default CURRENT_TIMESTAMP comment '创建时间',
     updateTime    datetime    not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP comment '更新时间',
-    userRole varchar(20) not null default 'user' comment 'user/admin/ban',
+    userRole      varchar(20) not null default 'user' comment 'user/admin/ban',
     lastLoginTime bigint(20) comment '最后登录时间',
     lastOffTime   bigint(20) comment '最后离开时间',
     unique key idx_key_email (email)
@@ -45,3 +45,24 @@ create table meetingMember
     meetingStatus tinyint(4) comment '会议状态',
     primary key (meetingId, userId)
 ) comment '会议成员表';
+
+create table meetingReserve
+(
+    meetingId    int primary key comment '会议 ID',
+    name         varchar(100) not null comment '会议名',
+    joinType     tinyint(1)   not null comment '加入方式',
+    joinPassword varchar(5) comment '加入密码',
+    duration     int comment '会议时长',
+    startTime    datetime comment '开始时间',
+    createUserId int          not null comment '创建人 ID',
+    status       tinyint(1)   not null comment '状态',
+    createTime   datetime     not null default CURRENT_TIMESTAMP comment '创建时间',
+    updateTime   datetime     not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP comment '更新时间'
+) comment '预约会议表';
+
+create table meetingReserveMember
+(
+    meetingId    int not null comment '会议 ID',
+    inviteUserId int not null comment '邀请用户 ID',
+    primary key (meetingId, inviteUserId)
+) comment '预约会议成员表';

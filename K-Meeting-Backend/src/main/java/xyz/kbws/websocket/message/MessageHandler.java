@@ -1,6 +1,5 @@
 package xyz.kbws.websocket.message;
 
-import org.springframework.stereotype.Component;
 import xyz.kbws.model.dto.message.MessageSendDto;
 
 /**

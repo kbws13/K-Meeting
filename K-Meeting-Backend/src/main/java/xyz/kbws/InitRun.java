@@ -27,7 +27,7 @@ public class InitRun implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         log.info("应用启动成功，正在初始化系统组件...");
-        
+
         // 启动 Netty
         new Thread(nettyWebSocketStarter).start();
         log.info("Netty WebSocket 服务已启动");

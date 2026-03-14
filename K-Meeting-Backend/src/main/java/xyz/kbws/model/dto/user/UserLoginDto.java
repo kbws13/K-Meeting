@@ -11,10 +11,10 @@ import java.io.Serializable;
  */
 @Data
 public class UserLoginDto implements Serializable {
-    
+
     private String email;
-    
+
     private String password;
-    
+
     private static final long serialVersionUID = -9175743604901167299L;
 }

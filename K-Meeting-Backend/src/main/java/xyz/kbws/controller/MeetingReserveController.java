@@ -15,10 +15,10 @@ import xyz.kbws.common.ResultUtil;
 @Api(tags = "预约会议接口")
 @RestController
 @RequestMapping("/meetingReverse")
-public class MeetingReverseController {
-    
-    @GetMapping("/loadTodyMeeting")
-    public BaseResponse<Boolean> loadTodyMeeting() {
+public class MeetingReserveController {
+
+    @GetMapping("/loadTodayMeeting")
+    public BaseResponse<Boolean> loadTodayMeeting() {
         return ResultUtil.success(false);
     }
 }

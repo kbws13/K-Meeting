@@ -25,7 +25,7 @@ public class RabbitMQPublisher {
             String message = "RabbitMQ 发送消息测试";
             channel.basicPublish(EXCHANGE_NAME, "", null, message.getBytes());
         } catch (Exception e) {
-            
+
         }
     }
 }

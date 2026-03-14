@@ -7,6 +7,6 @@ package xyz.kbws.constant;
  */
 public interface UserConstant {
     String admin = "admin";
-    
+
     String user = "user";
 }

@@ -12,8 +12,8 @@ import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.meeting.PeerConnectDto;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.User;
-import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
+import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.utils.UserIdCodec;
@@ -31,13 +31,13 @@ import javax.annotation.Resource;
 @Component
 @ChannelHandler.Sharable
 public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketFrame> {
-    
+
     @Resource
     private UserMapper userMapper;
 
     @Resource
     private RedisComponent redisComponent;
-    
+
     @Resource
     private MessageHandler messageHandler;
 
@@ -61,7 +61,7 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
         PeerConnectDto peerMessage = new PeerConnectDto();
         peerMessage.setSignalType(peerConnectDto.getSignalType());
         peerMessage.setSignalData(peerConnectDto.getSignalData());
-        
+
         messageSendDto.setMessageContent(peerMessage);
         messageSendDto.setMessageId(loginUser.getCurrentMeetingId());
         messageSendDto.setSendUserId(loginUser.getUserId());

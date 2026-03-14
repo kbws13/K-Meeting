@@ -15,7 +15,7 @@ public enum MessageSendTypeEnum {
     ;
 
     private Integer type;
-    
+
     private String desc;
 
     MessageSendTypeEnum(Integer type, String desc) {

@@ -13,6 +13,6 @@ import java.util.List;
 @Data
 public class MeetingJoinObj implements Serializable {
     private MeetingMemberObj newMember;
-    
+
     private List<MeetingMemberObj> meetingMemberList;
 }

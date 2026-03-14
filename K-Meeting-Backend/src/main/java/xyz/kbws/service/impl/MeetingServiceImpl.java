@@ -45,7 +45,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
     @Resource
     private MeetingMemberService meetingMemberService;
-    
+
     @Resource
     private MeetingmemberMapper meetingmemberMapper;
 
@@ -189,7 +189,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         meetingMember.setMeetingStatus(MeetingStatusEnum.FINISHED.getValue());
         meetingMember.setMeetingId(meetingId);
         meetingmemberMapper.updateByMeetingId(meetingMember);
-        
+
         // TODO 更新预约会议状态
 
         List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);

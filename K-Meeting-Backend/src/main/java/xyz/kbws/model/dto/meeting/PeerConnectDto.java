@@ -11,16 +11,16 @@ import java.io.Serializable;
  */
 @Data
 public class PeerConnectDto implements Serializable {
-    
+
     private String token;
-    
+
     private String sendUserId;
-    
+
     private String receiveUserId;
-    
+
     private String signalType;
-    
+
     private String signalData;
-    
+
     private static final long serialVersionUID = 823333499624870160L;
 }

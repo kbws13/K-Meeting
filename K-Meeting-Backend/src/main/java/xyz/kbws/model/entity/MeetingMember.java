@@ -7,9 +7,10 @@ import java.util.Date;
 
 /**
  * 会议成员表
+ *
  * @TableName meetingMember
  */
-@TableName(value ="meetingMember")
+@TableName(value = "meetingMember")
 @Data
 public class MeetingMember {
     /**
@@ -38,7 +39,7 @@ public class MeetingMember {
     private Integer status;
 
     /**
-     * 
+     *
      */
     private Integer memberType;
 

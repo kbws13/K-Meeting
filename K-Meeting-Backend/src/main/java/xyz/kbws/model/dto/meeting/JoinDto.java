@@ -13,6 +13,6 @@ import java.io.Serializable;
 public class JoinDto implements Serializable {
 
     private Boolean videoOpen;
-    
+
     private static final long serialVersionUID = -2555509102276582299L;
 }

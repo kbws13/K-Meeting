@@ -10,7 +10,6 @@ import xyz.kbws.annotation.CurrentUser;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.exception.BusinessException;
-import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 

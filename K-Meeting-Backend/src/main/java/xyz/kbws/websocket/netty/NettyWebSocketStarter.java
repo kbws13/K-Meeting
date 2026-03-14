@@ -27,8 +27,8 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Component
-public class NettyWebSocketStarter implements Runnable{
-    
+public class NettyWebSocketStarter implements Runnable {
+
     @Resource
     private AppConfig appConfig;
 
@@ -40,13 +40,13 @@ public class NettyWebSocketStarter implements Runnable{
      * worker 线程组，用于处理消息
      */
     private EventLoopGroup workerGroup = new NioEventLoopGroup();
-    
+
     @Resource
     private HandlerTokenValidation handlerTokenValidation;
 
     @Resource
     private HandlerWebSocket handlerWebSocket;
-    
+
     @Override
     public void run() {
         try {

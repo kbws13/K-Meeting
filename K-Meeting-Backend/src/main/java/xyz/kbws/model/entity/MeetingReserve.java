@@ -1,6 +1,5 @@
 package xyz.kbws.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -8,33 +7,23 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 会议表
+ * 预约会议表
  *
- * @TableName meeting
+ * @TableName meetingReserve
  */
-@TableName(value = "meeting")
+@TableName(value = "meetingReserve")
 @Data
-public class Meeting {
+public class MeetingReserve {
     /**
      * 会议 ID
      */
     @TableId
-    private Integer id;
-
-    /**
-     * 会议号
-     */
-    private String meetingNo;
+    private Integer meetingId;
 
     /**
      * 会议名
      */
     private String name;
-
-    /**
-     * 创建人 ID
-     */
-    private Integer createUserId;
 
     /**
      * 加入方式
@@ -47,14 +36,19 @@ public class Meeting {
     private String joinPassword;
 
     /**
+     * 会议时长
+     */
+    private Integer duration;
+
+    /**
      * 开始时间
      */
     private Date startTime;
 
     /**
-     * 结束时间
+     * 创建人 ID
      */
-    private Date endTime;
+    private Integer createUserId;
 
     /**
      * 状态
@@ -70,10 +64,4 @@ public class Meeting {
      * 更新时间
      */
     private Date updateTime;
-
-    /**
-     * 成员数量
-     */
-    @TableField(exist = false)
-    private Integer memberCount;
 }

@@ -12,8 +12,8 @@ import java.io.Serializable;
  */
 @Data
 public class LoginUser extends UserVO implements Serializable {
-    
+
     private Integer userId;
-    
+
     private static final long serialVersionUID = -5558882804225519592L;
 }

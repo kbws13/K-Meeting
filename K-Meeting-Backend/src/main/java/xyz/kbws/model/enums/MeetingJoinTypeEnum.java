@@ -9,7 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public enum MeetingJoinTypeEnum {
-     NO_PASSWORD(0, "无需密码"),
+    NO_PASSWORD(0, "无需密码"),
     PASSWORD(1, "需要密码"),
     ;
 
