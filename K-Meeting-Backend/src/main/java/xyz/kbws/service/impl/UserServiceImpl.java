@@ -18,10 +18,9 @@ import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtil;
+import xyz.kbws.utils.UserIdCodec;
 
 import javax.annotation.Resource;
-
-import static xyz.kbws.utils.Util.shortCode6;
 
 /**
 * @author housenyao
@@ -70,7 +69,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         UserVO userVO = new UserVO();
         BeanUtil.copyProperties(user, userVO);
-        String secretUserId = shortCode6(user.getId().toString());
+        String secretUserId = UserIdCodec.encode(user.getId());
         userVO.setId(secretUserId);
         userVO.setToken(JwtUtil.createToken(secretUserId));
         LoginUser loginUser = new LoginUser();

@@ -16,6 +16,7 @@ import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
+import xyz.kbws.utils.UserIdCodec;
 import xyz.kbws.websocket.ChannelContextUtil;
 import xyz.kbws.websocket.message.MessageHandler;
 
@@ -64,7 +65,7 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
         messageSendDto.setMessageContent(peerMessage);
         messageSendDto.setMessageId(loginUser.getCurrentMeetingId());
         messageSendDto.setSendUserId(loginUser.getUserId());
-        messageSendDto.setReceiveUserId(peerConnectDto.getReceiveUserId());
+        messageSendDto.setReceiveUserId(UserIdCodec.decode(peerConnectDto.getReceiveUserId()));
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
 
         messageHandler.sendMessage(messageSendDto);

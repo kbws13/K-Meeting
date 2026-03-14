@@ -2,6 +2,7 @@ package xyz.kbws.websocket;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -17,11 +18,14 @@ import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.obj.MeetingExitObj;
+import xyz.kbws.model.obj.MeetingJoinObj;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
+import xyz.kbws.utils.UserIdCodec;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -108,7 +112,7 @@ public class ChannelContextUtil {
         if (channel == null) {
             return;
         }
-        channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(messageSendDto)));
+        channel.writeAndFlush(new TextWebSocketFrame(buildWsMessageJson(messageSendDto)));
     }
 
     private void sendMessage2Group(MessageSendDto messageSendDto) {
@@ -119,7 +123,7 @@ public class ChannelContextUtil {
         if (group == null) {
             return;
         }
-        group.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(messageSendDto)));
+        group.writeAndFlush(new TextWebSocketFrame(buildWsMessageJson(messageSendDto)));
 
         if (MessageTypeEnum.EXIT_MEETING_ROOM.getValue().equals(messageSendDto.getMessageType())) {
             MeetingExitObj exitObj = JSONUtil.toBean((String) messageSendDto.getMessageContent(), MeetingExitObj.class);
@@ -152,5 +156,65 @@ public class ChannelContextUtil {
 
     private void removeContextGroup(Integer meetingId) {
         MEETING_ROOM_CONTEXT_MAP.remove(meetingId);
+    }
+
+    private String buildWsMessageJson(MessageSendDto<?> messageSendDto) {
+        JSONObject payload = (JSONObject) JSON.toJSON(messageSendDto);
+        if (messageSendDto.getSendUserId() != null) {
+            payload.put("sendUserId", UserIdCodec.encode(messageSendDto.getSendUserId()));
+        }
+        if (messageSendDto.getReceiveUserId() != null) {
+            payload.put("receiveUserId", UserIdCodec.encode(messageSendDto.getReceiveUserId()));
+        }
+
+        Object messageContent = messageSendDto.getMessageContent();
+        if (messageContent instanceof MeetingJoinObj) {
+            payload.put("messageContent", buildMeetingJoinPayload((MeetingJoinObj) messageContent));
+        } else if (MessageTypeEnum.EXIT_MEETING_ROOM.getValue().equals(messageSendDto.getMessageType())
+                && messageContent instanceof String) {
+            MeetingExitObj meetingExitObj = JSONUtil.toBean((String) messageContent, MeetingExitObj.class);
+            payload.put("messageContent", buildMeetingExitPayload(meetingExitObj));
+        }
+        return JSON.toJSONString(payload);
+    }
+
+    private JSONObject buildMeetingJoinPayload(MeetingJoinObj meetingJoinObj) {
+        JSONObject payload = new JSONObject();
+        payload.put("newMember", buildMeetingMemberPayload(meetingJoinObj.getNewMember()));
+        List<JSONObject> memberList = new ArrayList<>();
+        if (meetingJoinObj.getMeetingMemberList() != null) {
+            for (MeetingMemberObj meetingMemberObj : meetingJoinObj.getMeetingMemberList()) {
+                memberList.add(buildMeetingMemberPayload(meetingMemberObj));
+            }
+        }
+        payload.put("meetingMemberList", memberList);
+        return payload;
+    }
+
+    private JSONObject buildMeetingExitPayload(MeetingExitObj meetingExitObj) {
+        JSONObject payload = new JSONObject();
+        if (meetingExitObj.getExitUserId() != null) {
+            payload.put("exitUserId", UserIdCodec.encode(meetingExitObj.getExitUserId()));
+        }
+        payload.put("exitStatus", meetingExitObj.getExitStatus());
+        List<JSONObject> memberList = new ArrayList<>();
+        if (meetingExitObj.getMeetingMemberObjList() != null) {
+            for (MeetingMemberObj meetingMemberObj : meetingExitObj.getMeetingMemberObjList()) {
+                memberList.add(buildMeetingMemberPayload(meetingMemberObj));
+            }
+        }
+        payload.put("meetingMemberObjList", memberList);
+        return payload;
+    }
+
+    private JSONObject buildMeetingMemberPayload(MeetingMemberObj meetingMemberObj) {
+        if (meetingMemberObj == null) {
+            return null;
+        }
+        JSONObject payload = (JSONObject) JSON.toJSON(meetingMemberObj);
+        if (meetingMemberObj.getUserId() != null) {
+            payload.put("userId", UserIdCodec.encode(meetingMemberObj.getUserId()));
+        }
+        return payload;
     }
 }

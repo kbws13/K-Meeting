@@ -5,8 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.MeetingMapper;
@@ -144,37 +144,62 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
             redisComponent.saveUserVO(loginUser);
             return false;
         }
-        MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
-        messageSendDto.setMessageType(MessageTypeEnum.EXIT_MEETING_ROOM.getValue());
         // 清空当前正在进行的会议
         loginUser.setCurrentMeetingId(null);
         redisComponent.saveUserVO(loginUser);
+        return handleMemberExit(meetingId, userId, meetingMemberStatus);
+    }
 
-        List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
-        MeetingExitObj meetingExitObj = new MeetingExitObj();
-        meetingExitObj.setExitUserId(userId);
-        meetingExitObj.setMeetingMemberObjList(meetingMemberList);
-        meetingExitObj.setExitStatus(meetingMemberStatus.getStatus());
+    @Override
+    public Boolean kickOutMeetingRoom(LoginUser loginUser, Integer targetUserId, MeetingMemberStatus meetingMemberStatus) {
+        Integer meetingId = loginUser.getCurrentMeetingId();
+        if (meetingId == null || targetUserId == null) {
+            return false;
+        }
+        if (loginUser.getUserId().equals(targetUserId)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "不能操作自己");
+        }
+        Meeting meeting = this.getById(meetingId);
+        if (!meeting.getCreateUserId().equals(loginUser.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
 
-        messageSendDto.setMessageContent(JSONUtil.toJsonStr(meetingExitObj));
-        messageSendDto.setMessageId(meetingId);
+        LoginUser targetUser = redisComponent.getLoginUserById(targetUserId);
+        return exitMeetingRoom(targetUser, meetingMemberStatus);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean finishMeeting(Integer meetingId, Integer currentUserId) {
+        Meeting meeting = this.getById(meetingId);
+        if (currentUserId != null && !meeting.getCreateUserId().equals(currentUserId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        meeting.setStatus(MeetingStatusEnum.FINISHED.getValue());
+        meeting.setEndTime(new Date());
+        this.updateById(meeting);
+
+        MessageSendDto messageSendDto = new MessageSendDto();
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
+        messageSendDto.setMessageType(MessageTypeEnum.FINISH_MEETING.getValue());
+        messageSendDto.setMeetingId(meetingId);
         messageHandler.sendMessage(messageSendDto);
 
-        List<MeetingMemberObj> onLineMemberList = meetingMemberList.stream().filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus())).collect(Collectors.toList());
-        if (onLineMemberList.isEmpty()) {
-            // TODO 结束会议
-            return true;
+        MeetingMember meetingMember = new MeetingMember();
+        meetingMember.setMeetingStatus(MeetingStatusEnum.FINISHED.getValue());
+        meetingMember.setMeetingId(meetingId);
+        meetingmemberMapper.updateByMeetingId(meetingMember);
+        
+        // TODO 更新预约会议状态
+
+        List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
+        for (MeetingMemberObj meetingMemberObj : meetingMemberList) {
+            LoginUser loginUser = redisComponent.getLoginUserById(meetingMemberObj.getUserId());
+            loginUser.setCurrentMeetingId(null);
+            redisComponent.saveUserVO(loginUser);
         }
 
-        if (ArrayUtils.contains(new Integer[]{MeetingMemberStatus.KICK_OUT.getStatus(), MeetingMemberStatus.BLACKLIST.getStatus()}, meetingMemberStatus)) {
-            MeetingMember meetingMember = new MeetingMember();
-            meetingMember.setMeetingId(meetingId);
-            meetingMember.setUserId(loginUser.getUserId());
-            meetingMember.setMeetingStatus(meetingMemberStatus.getStatus());
-            meetingmemberMapper.updateById(meetingMember);
-        }
-        
+        redisComponent.removeAllMeetingMember(meetingId);
         return true;
     }
 
@@ -207,6 +232,42 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         if (meetingMemberObj != null && MeetingMemberStatus.BLACKLIST.getStatus().equals(meetingMemberObj.getStatus())) {
             throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "你已被拉黑无法加入会议");
         }
+    }
+
+    private Boolean handleMemberExit(Integer meetingId, Integer targetUserId, MeetingMemberStatus meetingMemberStatus) {
+        Meeting meeting = this.getById(meetingId);
+        updateMeetingMemberStatus(meetingId, targetUserId, meetingMemberStatus);
+
+        MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+        messageSendDto.setMessageType(MessageTypeEnum.EXIT_MEETING_ROOM.getValue());
+
+        List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
+        MeetingExitObj meetingExitObj = new MeetingExitObj();
+        meetingExitObj.setExitUserId(targetUserId);
+        meetingExitObj.setMeetingMemberObjList(meetingMemberList);
+        meetingExitObj.setExitStatus(meetingMemberStatus.getStatus());
+
+        messageSendDto.setMessageContent(JSONUtil.toJsonStr(meetingExitObj));
+        messageSendDto.setMessageId(meetingId);
+        messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
+        messageHandler.sendMessage(messageSendDto);
+
+        List<MeetingMemberObj> onLineMemberList = meetingMemberList.stream()
+                .filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus()))
+                .collect(Collectors.toList());
+        if (onLineMemberList.isEmpty() && meeting.getCreateUserId().equals(targetUserId)) {
+            finishMeeting(meetingId, targetUserId);
+            return true;
+        }
+        return true;
+    }
+
+    private void updateMeetingMemberStatus(Integer meetingId, Integer userId, MeetingMemberStatus meetingMemberStatus) {
+        MeetingMember meetingMember = new MeetingMember();
+        meetingMember.setMeetingId(meetingId);
+        meetingMember.setUserId(userId);
+        meetingMember.setStatus(meetingMemberStatus.getStatus());
+        meetingmemberMapper.updateById(meetingMember);
     }
 }
 

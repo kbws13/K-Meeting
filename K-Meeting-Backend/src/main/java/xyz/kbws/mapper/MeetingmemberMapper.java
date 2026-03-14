@@ -16,6 +16,8 @@ public interface MeetingmemberMapper extends BaseMapper<MeetingMember> {
     @Override
     int updateById(@Param(Constants.ENTITY) MeetingMember entity);
 
+    int updateByMeetingId(@Param(Constants.ENTITY) MeetingMember entity);
+
     int insertOrUpdate(MeetingMember meetingMember);
 }
 

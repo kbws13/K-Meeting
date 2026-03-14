@@ -19,14 +19,17 @@ import xyz.kbws.model.dto.meeting.QuickMeetingDto;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
 import xyz.kbws.model.enums.MeetingMemberStatus;
+import xyz.kbws.model.enums.MeetingStatusEnum;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.MeetingService;
+import xyz.kbws.utils.UserIdCodec;
 import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * @author kbws
@@ -47,9 +50,17 @@ public class MeetingController {
     @Resource
     private MessageHandler messageHandler;
 
+    @ApiOperation("当前正在进行的会议")
     @GetMapping("/getCurrentMeeting")
-    public BaseResponse getCurrentMeeting() {
-        return ResultUtil.success(null);
+    public BaseResponse<Meeting> getCurrentMeeting(@CurrentUser LoginUser loginUser) {
+        if (loginUser.getCurrentMeetingId() == null) {
+            return ResultUtil.success(null);
+        }
+        Meeting meeting = meetingService.getById(loginUser.getCurrentMeetingId());
+        if (meeting.getStatus().equals(MeetingStatusEnum.FINISHED.getValue())) {
+            return ResultUtil.success(null);
+        }
+        return ResultUtil.success(meeting);
     }
 
     @ApiOperation("会议列表")
@@ -109,13 +120,41 @@ public class MeetingController {
         return ResultUtil.success(res);
     }
 
+    @ApiOperation("踢出会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/kickOut")
+    public BaseResponse<Boolean> kickOut(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        Integer targetUserId = UserIdCodec.decode(userId);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.KICK_OUT);
+        return ResultUtil.success(res);
+    }
+
+    @ApiOperation("拉黑")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/black")
+    public BaseResponse<Boolean> black(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        Integer targetUserId = UserIdCodec.decode(userId);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        return ResultUtil.success(res);
+    }
+
+    @ApiOperation("结束会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/finish")
+    public BaseResponse<Boolean> finish(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        Integer targetUserId = UserIdCodec.decode(userId);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        return ResultUtil.success(res);
+    }
+
     @ApiOperation("测试发送消息")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/testSendMessage")
-    public BaseResponse<Boolean> testSendMessage(@CurrentUser LoginUser loginUser) {
+    public BaseResponse<Boolean> testSendMessage(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        Integer receiveUserId = UserIdCodec.decode(userId);
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
-        messageSendDto.setReceiveUserId(loginUser.getUserId());
+        messageSendDto.setReceiveUserId(receiveUserId);
         messageSendDto.setMessageContent("测试发送消息");
         messageSendDto.setSendUserId(loginUser.getUserId());
         messageSendDto.setSendUserNickName(loginUser.getNickName());

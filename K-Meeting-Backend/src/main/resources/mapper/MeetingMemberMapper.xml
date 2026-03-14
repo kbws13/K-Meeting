@@ -44,4 +44,16 @@
         WHERE meetingId = #{et.meetingId}
           AND userId = #{et.userId}
     </update>
+
+    <update id="updateByMeetingId">
+        UPDATE meetingMember
+        <set>
+            <if test="et.nickName != null">nickName = #{et.nickName},</if>
+            <if test="et.lastJoinTime != null">lastJoinTime = #{et.lastJoinTime},</if>
+            <if test="et.status != null">status = #{et.status},</if>
+            <if test="et.memberType != null">memberType = #{et.memberType},</if>
+            <if test="et.meetingStatus != null">meetingStatus = #{et.meetingStatus},</if>
+        </set>
+        WHERE meetingId = #{et.meetingId}
+    </update>
 </mapper>

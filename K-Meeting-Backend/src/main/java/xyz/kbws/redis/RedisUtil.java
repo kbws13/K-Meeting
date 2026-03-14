@@ -66,6 +66,19 @@ public class RedisUtil<V> {
         }
     }
 
+    public boolean hdel(String key, String... fields) {
+        try {
+            if (key == null || fields == null || fields.length == 0) {
+                return false;
+            }
+            redisTemplate.opsForHash().delete(key, (Object[]) fields);
+            return true;
+        } catch (Exception e) {
+            log.error("redis hdel error: key:{}, fields:{}", key, Arrays.toString(fields), e);
+            return false;
+        }
+    }
+
     public <T> List<T> hvals(String key, Class<T> clazz) {
         try {
             List<Object> values = redisTemplate.opsForHash().values(key);

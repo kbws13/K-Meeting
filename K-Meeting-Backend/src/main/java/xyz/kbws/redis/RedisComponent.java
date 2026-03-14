@@ -102,4 +102,13 @@ public class RedisComponent {
         addMeeting(meetingId, meetingMember);
         return true;
     }
+
+    public void removeAllMeetingMember(Integer meetingId) {
+        List<MeetingMemberObj> meetingMemberList = getMeetingMemberList(meetingId);
+        List<Integer> userIdList = meetingMemberList.stream().map(MeetingMemberObj::getUserId).collect(Collectors.toList());
+        if (userIdList.isEmpty()) {
+            return;
+        }
+        redisUtils.hdel(RedisConstant.MEETING_ROOM + meetingId, userIdList.toArray(new String[userIdList.size()]));
+    }
 }
