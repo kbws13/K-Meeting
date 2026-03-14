@@ -2,7 +2,9 @@ package xyz.kbws.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -10,10 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.MeetingMapper;
+import xyz.kbws.mapper.MeetingReserveMapper;
+import xyz.kbws.mapper.MeetingReserveMemberMapper;
 import xyz.kbws.mapper.MeetingmemberMapper;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
 import xyz.kbws.model.entity.MeetingMember;
+import xyz.kbws.model.entity.MeetingReserve;
+import xyz.kbws.model.entity.MeetingReserveMember;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.model.obj.MeetingExitObj;
 import xyz.kbws.model.obj.MeetingJoinObj;
@@ -48,6 +54,12 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
     @Resource
     private MeetingmemberMapper meetingmemberMapper;
+
+    @Resource
+    private MeetingReserveMapper meetingReserveMapper;
+
+    @Resource
+    private MeetingReserveMemberMapper meetingReserveMemberMapper;
 
     @Resource
     private RedisComponent redisComponent;
@@ -190,7 +202,11 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         meetingMember.setMeetingId(meetingId);
         meetingmemberMapper.updateByMeetingId(meetingMember);
 
-        // TODO 更新预约会议状态
+        // 更新预约会议状态
+        LambdaUpdateWrapper<MeetingReserve> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(MeetingReserve::getMeetingId, meetingId)
+                .set(MeetingReserve::getStatus, MeetingReserveStatusEnum.FINISHED.getValue());
+        meetingReserveMapper.update(null, updateWrapper);
 
         List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
         for (MeetingMemberObj meetingMemberObj : meetingMemberList) {
@@ -201,6 +217,45 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
         redisComponent.removeAllMeetingMember(meetingId);
         return true;
+    }
+
+    @Override
+    public void reserveJoinMeeting(Integer meetingId, LoginUser loginUser, String joinPassword) {
+        Integer userId = loginUser.getUserId();
+        if (userId == null || !meetingId.equals(loginUser.getCurrentMeetingId())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "有未结束的会议");
+        }
+        checkMeetingJoin(meetingId, userId);
+        MeetingReserve meetingReserve = this.meetingReserveMapper.selectById(meetingId);
+        if (meetingReserve == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        LambdaQueryWrapper<MeetingReserveMember> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MeetingReserveMember::getMeetingId, meetingId)
+                .eq(MeetingReserveMember::getInviteUserId, userId);
+        MeetingReserveMember member = meetingReserveMemberMapper.selectOne(queryWrapper);
+        if (member == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        if (MeetingJoinTypeEnum.PASSWORD.getValue().equals(meetingReserve.getJoinType()) && !meetingReserve.getJoinPassword().equals(joinPassword)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "入会密码错误");
+        }
+        Meeting meeting = meetingMapper.selectById(meetingId);
+        if (meeting == null) {
+            meeting = new Meeting();
+            meeting.setId(meetingId);
+            meeting.setMeetingNo(RandomUtil.randomNumbers(6));
+            meeting.setCreateUserId(meetingReserve.getCreateUserId());
+            meeting.setName(meetingReserve.getName());
+            meeting.setJoinType(meetingReserve.getJoinType());
+            meeting.setJoinPassword(meetingReserve.getJoinPassword());
+            Date currentDate = new Date();
+            meeting.setStartTime(currentDate);
+            meeting.setStatus(MeetingStatusEnum.PENDING.getValue());
+            meetingMapper.insert(meeting);
+        }
+        loginUser.setCurrentMeetingId(meetingId);
+        redisComponent.saveUserVO(loginUser);
     }
 
     private void addMeetingMember(Integer meetingId, Integer userId, String nickName, MemberTypeEnum memberType) {

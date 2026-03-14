@@ -182,6 +182,15 @@ public class MeetingController {
         return ResultUtil.success(members);
     }
 
+    @ApiOperation("邀请参加会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/reserveJoin")
+    public BaseResponse<Boolean> reserveJoin(@CurrentUser LoginUser loginUser, @NotEmpty Integer meetingId, @NotEmpty String nickName, String password) {
+        loginUser.setNickName(nickName);
+        meetingService.reserveJoinMeeting(meetingId, loginUser, password);
+        return ResultUtil.success(true);
+    }
+
     @ApiOperation("测试发送消息")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/testSendMessage")

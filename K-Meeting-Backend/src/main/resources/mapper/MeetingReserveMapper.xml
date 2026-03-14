@@ -21,4 +21,46 @@
         meetingId,name,joinType,joinPassword,duration,startTime,
         createUserId,status,createTime,updateTime
     </sql>
+
+    <sql id="query_condition">
+        <where>
+            1=1
+            <if test="query.userId != null">
+                and m.meetingId in (select meetingId from meetingReserveMember where inviteUserId = #{query.userId})
+            </if>
+            <if test="query.status != null">
+                and m.status = #{query.status}
+            </if>
+            <if test="query.startTimeStart != null and query.startTimeStart != ''">
+                and m.startTime <![CDATA[>=]]> #{query.startTimeStart}
+            </if>
+            <if test="query.startTimeEnd != null and query.startTimeEnd != ''">
+                and m.startTime <![CDATA[<=]]> #{query.startTimeEnd}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="query_sql">
+        select
+        <include refid="Base_Column_List"/>
+        <if test="query.queryUserInfo">
+            , u.nickName nickName
+        </if>
+        from meetingReserve m
+        <if test="query.queryUserInfo">
+            left join user u on u.id = m.createUserId
+        </if>
+        <include refid="query_condition"/>
+        <if test="query.sortField != null">
+            order by ${query.sortField} ${query.sortOrder}
+        </if>
+    </sql>
+
+    <select id="findListByPage" resultMap="BaseResultMap">
+        <include refid="query_sql"/>
+    </select>
+
+    <select id="findList" resultMap="BaseResultMap">
+        <include refid="query_sql"/>
+    </select>
 </mapper>

@@ -26,4 +26,6 @@ public interface MeetingService extends IService<Meeting> {
     Boolean kickOutMeetingRoom(LoginUser loginUser, Integer targetUserId, MeetingMemberStatus meetingMemberStatus);
 
     Boolean finishMeeting(Integer meetingId, Integer currentUserId);
+
+    void reserveJoinMeeting(Integer meetingId, LoginUser loginUser, String joinPassword);
 }
