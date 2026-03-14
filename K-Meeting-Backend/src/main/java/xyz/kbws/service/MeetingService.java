@@ -3,6 +3,7 @@ package xyz.kbws.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import xyz.kbws.model.entity.Meeting;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.entity.LoginUser;
@@ -20,4 +21,6 @@ public interface MeetingService extends IService<Meeting> {
     void join(LoginUser userVO, Integer meetingId, Boolean openVideo);
 
     Integer preJoinMeeting(Integer meetingId, LoginUser loginUser, String password);
+
+    Boolean exitMeetingRoom(LoginUser loginUser, MeetingMemberStatus meetingMemberStatus);
 }

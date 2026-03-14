@@ -2,6 +2,7 @@ package xyz.kbws.redis;
 
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.RedisConstant;
+import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.entity.LoginUser;
 
@@ -90,5 +91,15 @@ public class RedisComponent {
 
     public MeetingMemberObj getMeetingMember(Integer meetingId, Integer userId) {
         return (MeetingMemberObj) redisUtils.hget(RedisConstant.MEETING_ROOM + meetingId.toString(), userId.toString());
+    }
+
+    public Boolean exitMeeting(Integer meetingId, Integer userId, MeetingMemberStatus meetingMemberStatus) {
+        MeetingMemberObj meetingMember = getMeetingMember(meetingId, userId);
+        if (meetingMember == null) {
+            return false;
+        }
+        meetingMember.setStatus(meetingMemberStatus.getStatus());
+        addMeeting(meetingId, meetingMember);
+        return true;
     }
 }

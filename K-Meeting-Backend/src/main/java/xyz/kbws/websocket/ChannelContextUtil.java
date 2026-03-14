@@ -1,5 +1,6 @@
 package xyz.kbws.websocket;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
@@ -12,12 +13,18 @@ import org.springframework.stereotype.Component;
 import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.User;
+import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
+import xyz.kbws.model.enums.MessageTypeEnum;
+import xyz.kbws.model.obj.MeetingExitObj;
+import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author kbws
@@ -113,5 +120,37 @@ public class ChannelContextUtil {
             return;
         }
         group.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(messageSendDto)));
+
+        if (MessageTypeEnum.EXIT_MEETING_ROOM.getValue().equals(messageSendDto.getMessageType())) {
+            MeetingExitObj exitObj = JSONUtil.toBean((String) messageSendDto.getMessageContent(), MeetingExitObj.class);
+            removeContextFromGroup(exitObj.getExitUserId(), messageSendDto.getMessageId());
+            List<MeetingMemberObj> meetingMemberObjList = redisComponent.getMeetingMemberList(messageSendDto.getMeetingId());
+            List<MeetingMemberObj> onLineMemberList = meetingMemberObjList.stream().filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus())).collect(Collectors.toList());
+            if (onLineMemberList.isEmpty()) {
+                removeContextGroup(messageSendDto.getMeetingId());
+            }
+        }
+        if (MessageTypeEnum.FINISH_MEETING.getValue().equals(messageSendDto.getMessageType())) {
+            List<MeetingMemberObj> meetingMemberObjList = redisComponent.getMeetingMemberList(messageSendDto.getMeetingId());
+            for (MeetingMemberObj meetingMemberObj : meetingMemberObjList) {
+                removeContextFromGroup(meetingMemberObj.getUserId(), messageSendDto.getMessageId());
+            }
+            removeContextGroup(messageSendDto.getMeetingId());
+        }
+    }
+
+    private void removeContextFromGroup(Integer userId, Integer meetingId) {
+        Channel context = USER_CONTEXT_MAP.get(userId);
+        if (context == null) {
+            return;
+        }
+        ChannelGroup channelGroup = MEETING_ROOM_CONTEXT_MAP.get(meetingId);
+        if (channelGroup != null) {
+            channelGroup.remove(context);
+        }
+    }
+
+    private void removeContextGroup(Integer meetingId) {
+        MEETING_ROOM_CONTEXT_MAP.remove(meetingId);
     }
 }

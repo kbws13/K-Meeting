@@ -1,7 +1,9 @@
 package xyz.kbws.mapper;
 
-import xyz.kbws.model.entity.MeetingMember;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import org.apache.ibatis.annotations.Param;
+import xyz.kbws.model.entity.MeetingMember;
 
 /**
 * @author housenyao
@@ -10,6 +12,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity xyz.kbws.model.entity.Meetingmember
 */
 public interface MeetingmemberMapper extends BaseMapper<MeetingMember> {
+
+    @Override
+    int updateById(@Param(Constants.ENTITY) MeetingMember entity);
+
     int insertOrUpdate(MeetingMember meetingMember);
 }
 

@@ -18,6 +18,7 @@ import xyz.kbws.model.dto.meeting.PreJoinDto;
 import xyz.kbws.model.dto.meeting.QuickMeetingDto;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
+import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.enums.MessageSendTypeEnum;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.redis.RedisComponent;
@@ -98,6 +99,14 @@ public class MeetingController {
     public BaseResponse<Boolean> join(@RequestBody JoinDto joinDto, @CurrentUser LoginUser userVO) {
         meetingService.join(userVO, userVO.getCurrentMeetingId(), joinDto.getVideoOpen());
         return ResultUtil.success(true);
+    }
+
+    @ApiOperation("退出会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/exit")
+    public BaseResponse<Boolean> exit(@CurrentUser LoginUser loginUser) {
+        Boolean res = meetingService.exitMeetingRoom(loginUser, MeetingMemberStatus.EXIT_MEETING);
+        return ResultUtil.success(res);
     }
 
     @ApiOperation("测试发送消息")

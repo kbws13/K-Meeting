@@ -1,17 +1,21 @@
 package xyz.kbws.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.MeetingMapper;
+import xyz.kbws.mapper.MeetingmemberMapper;
 import xyz.kbws.model.dto.message.MessageSendDto;
 import xyz.kbws.model.entity.Meeting;
 import xyz.kbws.model.entity.MeetingMember;
 import xyz.kbws.model.enums.*;
+import xyz.kbws.model.obj.MeetingExitObj;
 import xyz.kbws.model.obj.MeetingJoinObj;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.model.query.MeetingQuery;
@@ -25,6 +29,7 @@ import xyz.kbws.websocket.message.MessageHandler;
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author housenyao
@@ -40,13 +45,16 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
     @Resource
     private MeetingMemberService meetingMemberService;
+    
+    @Resource
+    private MeetingmemberMapper meetingmemberMapper;
 
     @Resource
     private RedisComponent redisComponent;
 
     @Resource
     private ChannelContextUtil channelContextUtil;
-    
+
     @Resource
     private MessageHandler messageHandler;
 
@@ -121,6 +129,53 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         loginUser.setCurrentMeetingId(meetingId);
         redisComponent.resetUserVO(loginUser);
         return meetingId;
+    }
+
+    @Override
+    public Boolean exitMeetingRoom(LoginUser loginUser, MeetingMemberStatus meetingMemberStatus) {
+        Integer meetingId = loginUser.getCurrentMeetingId();
+        if (meetingId == null) {
+            return false;
+        }
+        Integer userId = loginUser.getUserId();
+        Boolean exit = redisComponent.exitMeeting(meetingId, userId, meetingMemberStatus);
+        if (!exit) {
+            loginUser.setCurrentMeetingId(null);
+            redisComponent.saveUserVO(loginUser);
+            return false;
+        }
+        MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+        messageSendDto.setMessageType(MessageTypeEnum.EXIT_MEETING_ROOM.getValue());
+        // 清空当前正在进行的会议
+        loginUser.setCurrentMeetingId(null);
+        redisComponent.saveUserVO(loginUser);
+
+        List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
+        MeetingExitObj meetingExitObj = new MeetingExitObj();
+        meetingExitObj.setExitUserId(userId);
+        meetingExitObj.setMeetingMemberObjList(meetingMemberList);
+        meetingExitObj.setExitStatus(meetingMemberStatus.getStatus());
+
+        messageSendDto.setMessageContent(JSONUtil.toJsonStr(meetingExitObj));
+        messageSendDto.setMessageId(meetingId);
+        messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
+        messageHandler.sendMessage(messageSendDto);
+
+        List<MeetingMemberObj> onLineMemberList = meetingMemberList.stream().filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus())).collect(Collectors.toList());
+        if (onLineMemberList.isEmpty()) {
+            // TODO 结束会议
+            return true;
+        }
+
+        if (ArrayUtils.contains(new Integer[]{MeetingMemberStatus.KICK_OUT.getStatus(), MeetingMemberStatus.BLACKLIST.getStatus()}, meetingMemberStatus)) {
+            MeetingMember meetingMember = new MeetingMember();
+            meetingMember.setMeetingId(meetingId);
+            meetingMember.setUserId(loginUser.getUserId());
+            meetingMember.setMeetingStatus(meetingMemberStatus.getStatus());
+            meetingmemberMapper.updateById(meetingMember);
+        }
+        
+        return true;
     }
 
     private void addMeetingMember(Integer meetingId, Integer userId, String nickName, MemberTypeEnum memberType) {
