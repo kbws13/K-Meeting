@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.kbws.common.ErrorCode;
@@ -293,7 +294,6 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     }
 
     private void handleMemberExit(Integer meetingId, Integer targetUserId, MeetingMemberStatus meetingMemberStatus) {
-        Meeting meeting = this.getById(meetingId);
         updateMeetingMemberStatus(meetingId, targetUserId, meetingMemberStatus);
 
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
@@ -316,11 +316,11 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         if (onLineMemberList.isEmpty()) {
             MeetingReserve meetingReserve = meetingReserveMapper.selectById(meetingId);
             if (meetingReserve == null) {
-                finishMeeting(meetingId, null);
+                ((MeetingService) AopContext.currentProxy()).finishMeeting(meetingId, null);
                 return;
             }
             if(System.currentTimeMillis() > meetingReserve.getStartTime().getTime() + meetingReserve.getDuration() * 60 * 1000) {
-                finishMeeting(meetingId, null);
+                ((MeetingService) AopContext.currentProxy()).finishMeeting(meetingId, null);
                 return;
             }
         }
