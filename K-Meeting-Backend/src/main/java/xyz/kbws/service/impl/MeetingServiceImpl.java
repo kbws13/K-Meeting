@@ -1,10 +1,12 @@
 package xyz.kbws.service.impl;
 
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -159,7 +161,8 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         // 清空当前正在进行的会议
         loginUser.setCurrentMeetingId(null);
         redisComponent.saveUserVO(loginUser);
-        return handleMemberExit(meetingId, userId, meetingMemberStatus);
+        handleMemberExit(meetingId, userId, meetingMemberStatus);
+        return true;
     }
 
     @Override
@@ -289,7 +292,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         }
     }
 
-    private Boolean handleMemberExit(Integer meetingId, Integer targetUserId, MeetingMemberStatus meetingMemberStatus) {
+    private void handleMemberExit(Integer meetingId, Integer targetUserId, MeetingMemberStatus meetingMemberStatus) {
         Meeting meeting = this.getById(meetingId);
         updateMeetingMemberStatus(meetingId, targetUserId, meetingMemberStatus);
 
@@ -310,11 +313,24 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         List<MeetingMemberObj> onLineMemberList = meetingMemberList.stream()
                 .filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus()))
                 .collect(Collectors.toList());
-        if (onLineMemberList.isEmpty() && meeting.getCreateUserId().equals(targetUserId)) {
-            finishMeeting(meetingId, targetUserId);
-            return true;
+        if (onLineMemberList.isEmpty()) {
+            MeetingReserve meetingReserve = meetingReserveMapper.selectById(meetingId);
+            if (meetingReserve == null) {
+                finishMeeting(meetingId, null);
+                return;
+            }
+            if(System.currentTimeMillis() > meetingReserve.getStartTime().getTime() + meetingReserve.getDuration() * 60 * 1000) {
+                finishMeeting(meetingId, null);
+                return;
+            }
         }
-        return true;
+        if (ArrayUtil.contains(new Integer[]{MeetingMemberStatus.KICK_OUT.getStatus(), MeetingMemberStatus.EXIT_MEETING.getStatus()}, meetingMemberStatus)) {
+            LambdaUpdateWrapper<MeetingMember> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(MeetingMember::getStatus, meetingMemberStatus.getStatus())
+                    .eq(MeetingMember::getMeetingId, meetingId)
+                    .eq(MeetingMember::getUserId, targetUserId);
+            meetingmemberMapper.update(null, updateWrapper);
+        }
     }
 
     private void updateMeetingMemberStatus(Integer meetingId, Integer userId, MeetingMemberStatus meetingMemberStatus) {
