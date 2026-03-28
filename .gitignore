@@ -1,3 +1,8 @@
 K-Meeting-Backend/.idea/
 K-Meeting-Backend/.env
 K-Meeting-Backend/target
+k-meeting-frontend/.idea/
+k-meeting-frontend/.vscode/
+k-meeting-frontend/.env
+k-meeting-frontend/build/
+k-meeting-frontend/nul
