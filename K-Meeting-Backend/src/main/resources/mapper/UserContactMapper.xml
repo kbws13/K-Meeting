@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.UserContactMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.UserContact">
+        <id property="userId" column="userId"/>
+        <id property="contactId" column="contactId"/>
+        <result property="status" column="status"/>
+        <result property="lastUpdateTime" column="lastUpdateTime"/>
+    </resultMap>
+
+    <resultMap id="ContactVOResultMap" type="xyz.kbws.model.vo.ContactVO" extends="BaseResultMap">
+        <result property="email" column="email"/>
+        <result property="nickName" column="nickName"/>
+        <result property="sex" column="sex"/>
+        <result property="userStatus" column="userStatus"/>
+        <result property="meetingNo" column="meetingNo"/>
+        <result property="lastLoginTime" column="lastLoginTime"/>
+        <result property="lastOffTime" column="lastOffTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        uc.userId,uc.contactId,uc.status,uc.lastUpdateTime
+    </sql>
+
+    <sql id="query_condition">
+        <where>
+            1=1
+            <if test="query.userId != null">
+                and uc.userId = #{query.userId}
+            </if>
+            <if test="query.status != null">
+                and uc.status = #{query.status}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="query_sql">
+        select
+        <include refid="Base_Column_List"/>
+        <if test="query.queryUserInfo != null and query.queryUserInfo">
+            ,u.email email
+            ,u.nickName nickName
+            ,u.sex sex
+            ,u.status userStatus
+            ,u.meetingNo meetingNo
+            ,u.lastLoginTime lastLoginTime
+            ,u.lastOffTime lastOffTime
+        </if>
+        from userContact uc
+        <if test="query.queryUserInfo != null and query.queryUserInfo">
+            left join user u on u.id = uc.contactId
+        </if>
+        <include refid="query_condition"/>
+        order by uc.lastUpdateTime desc
+    </sql>
+
+    <select id="findListByPage" resultMap="ContactVOResultMap">
+        <include refid="query_sql"/>
+    </select>
+</mapper>

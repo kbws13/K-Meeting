@@ -66,3 +66,23 @@ create table meetingReserveMember
     inviteUserId int not null comment '邀请用户 ID',
     primary key (meetingId, inviteUserId)
 ) comment '预约会议成员表';
+
+create table userContactApply
+(
+    id            int primary key auto_increment comment '申请 ID',
+    applyUserId   int        not null comment '申请人 ID',
+    receiveUserId int        not null comment '接收人 ID',
+    status        tinyint(1) not null comment '状态',
+    lastApplyTime datetime   not null default CURRENT_TIMESTAMP comment '最后一次申请时间',
+    unique key idx_key (applyUserId, receiveUserId),
+    key idx_last_apply_time (lastApplyTime)
+) comment '联系人申请表';
+
+create table userContact
+(
+    userId         int        not null comment '用户 ID',
+    contactId      int        not null comment '联系人 ID',
+    status         tinyint(1) not null comment '状态',
+    lastUpdateTime datetime   not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP comment '最后一次更新时间',
+    primary key (userId, contactId)
+) comment '联系人表';
