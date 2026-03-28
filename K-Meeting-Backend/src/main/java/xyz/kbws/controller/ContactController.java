@@ -98,4 +98,12 @@ public class ContactController {
         userContactApplyService.deal(UserIdCodec.decode(applyUserId), loginUser.getUserId(), loginUser.getNickName(), status);
         return ResultUtil.success(null);
     }
+
+    @ApiOperation("删除")
+    @PostMapping("/delete")
+    @AuthCheck(mustRole = UserConstant.user)
+    public BaseResponse<Object> delete(@CurrentUser LoginUser loginUser, @NotEmpty Integer contactId, @NotNull Integer status) {
+        userContactService.deleteContact(loginUser.getUserId(), contactId, status);
+        return ResultUtil.success(null);
+    }
 }

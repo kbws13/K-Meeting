@@ -111,4 +111,12 @@ public class RedisComponent {
         }
         redisUtils.hdel(RedisConstant.MEETING_ROOM + meetingId, userIdList.toArray(new String[userIdList.size()]));
     }
+
+    public void addInviteInfo(Integer meetingId, Integer userId) {
+        redisUtils.setEx(RedisConstant.INVITE_MEMBER + userId + meetingId, meetingId, RedisConstant.ONE_MIN * 5L);
+    }
+
+    public Integer getInviteInfo(Integer meetingId, Integer userId) {
+        return (Integer) redisUtils.get(RedisConstant.INVITE_MEMBER + userId + meetingId);
+    }
 }

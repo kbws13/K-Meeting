@@ -34,6 +34,7 @@ import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -188,6 +189,30 @@ public class MeetingController {
     public BaseResponse<Boolean> reserveJoin(@CurrentUser LoginUser loginUser, @NotEmpty Integer meetingId, @NotEmpty String nickName, String password) {
         loginUser.setNickName(nickName);
         meetingService.reserveJoinMeeting(meetingId, loginUser, password);
+        return ResultUtil.success(true);
+    }
+
+    @ApiOperation("邀请联系人参加会议")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/inviteMember")
+    public BaseResponse<Boolean> inviteMember(@CurrentUser LoginUser loginUser, @NotEmpty String contactIds) {
+        meetingService.inviteMember(loginUser, contactIds);
+        return ResultUtil.success(true);
+    }
+
+    @ApiOperation("接受邀请")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/accept")
+    public BaseResponse<Boolean> accept(@CurrentUser LoginUser loginUser, @NotNull Integer meetingId) {
+        meetingService.acceptInvite(loginUser, meetingId);
+        return ResultUtil.success(true);
+    }
+    
+    @ApiOperation("开启/关闭摄像头")
+    @AuthCheck(mustRole = UserConstant.user)
+    @PostMapping("/sendOpenVideoChangeMessage")
+    public BaseResponse<Boolean> sendOpenVideoChangeMessage(@CurrentUser LoginUser loginUser, @NotNull Boolean openVideo) {
+        meetingService.updateMemberOpenVideo(loginUser.getCurrentMeetingId(), loginUser.getUserId(), openVideo);
         return ResultUtil.success(true);
     }
 

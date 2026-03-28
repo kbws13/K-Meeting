@@ -28,4 +28,10 @@ public interface MeetingService extends IService<Meeting> {
     Boolean finishMeeting(Integer meetingId, Integer currentUserId);
 
     void reserveJoinMeeting(Integer meetingId, LoginUser loginUser, String joinPassword);
+
+    void inviteMember(LoginUser loginUser, String selectContactIds);
+
+    void acceptInvite(LoginUser loginUser, Integer meetingId);
+
+    void updateMemberOpenVideo(Integer meetingId, Integer userId, Boolean openVideo);
 }

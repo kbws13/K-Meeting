@@ -38,7 +38,7 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
 
     @Resource
     private UserContactApplyMapper userContactApplyMapper;
-    
+
     @Resource
     private UserContactService userContactService;
 
@@ -101,7 +101,7 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
     public void deal(Integer applyUserId, Integer userId, String nickName, Integer status) {
         ContactApplyStatusEnum statusEnum = ContactApplyStatusEnum.getByValue(status);
         UserContactApply apply = this.userContactApplyMapper.selectOneByApplyUserIdAndReceiveUserId(applyUserId, userId);
-        if (apply == null) {
+        if (apply == null || statusEnum == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         if (ContactApplyStatusEnum.PASS.getValue().equals(status)) {
@@ -110,8 +110,8 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
             userContact.setContactId(userId);
             userContact.setStatus(ContactStatusEnum.FRIEND.getValue());
             userContact.setLastUpdateTime(new Date());
-            this.userContactService.save(userContact);     
-            
+            this.userContactService.save(userContact);
+
             userContact.setUserId(userId);
             userContact.setContactId(applyUserId);
             this.userContactService.save(userContact);

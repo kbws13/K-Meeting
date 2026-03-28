@@ -19,12 +19,10 @@ import xyz.kbws.mapper.MeetingReserveMapper;
 import xyz.kbws.mapper.MeetingReserveMemberMapper;
 import xyz.kbws.mapper.MeetingmemberMapper;
 import xyz.kbws.model.dto.message.MessageSendDto;
-import xyz.kbws.model.entity.Meeting;
-import xyz.kbws.model.entity.MeetingMember;
-import xyz.kbws.model.entity.MeetingReserve;
-import xyz.kbws.model.entity.MeetingReserveMember;
+import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.model.obj.MeetingExitObj;
+import xyz.kbws.model.obj.MeetingInviteObj;
 import xyz.kbws.model.obj.MeetingJoinObj;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.model.query.MeetingQuery;
@@ -32,11 +30,14 @@ import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.MeetingMemberService;
 import xyz.kbws.service.MeetingService;
+import xyz.kbws.service.UserContactService;
 import xyz.kbws.websocket.ChannelContextUtil;
 import xyz.kbws.websocket.message.MessageHandler;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,9 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
 
     @Resource
     private MeetingReserveMemberMapper meetingReserveMemberMapper;
+
+    @Resource
+    private UserContactService userContactService;
 
     @Resource
     private RedisComponent redisComponent;
@@ -260,6 +264,64 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         }
         loginUser.setCurrentMeetingId(meetingId);
         redisComponent.saveUserVO(loginUser);
+    }
+
+    @Override
+    public void inviteMember(LoginUser loginUser, String selectContactIds) {
+        List<Integer> contactIds = Arrays.stream(selectContactIds.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+        LambdaQueryWrapper<UserContact> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserContact::getUserId, loginUser.getUserId())
+                .eq(UserContact::getStatus, ContactStatusEnum.FRIEND.getValue());
+        List<UserContact> userContacts = userContactService.list(queryWrapper);
+        List<Integer> contactIdList = userContacts.stream().map(UserContact::getContactId).collect(Collectors.toList());
+        if (!new HashSet<>(contactIdList).containsAll(contactIds)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Meeting meeting = meetingMapper.selectById(loginUser.getCurrentMeetingId());
+        for (Integer contactId : contactIds) {
+            MeetingMemberObj meetingMemberObj = redisComponent.getMeetingMember(loginUser.getCurrentMeetingId(), contactId);
+            if (meetingMemberObj != null && meetingMemberObj.getStatus().equals(MeetingMemberStatus.NORMAL.getStatus())) {
+                continue;
+            }
+            redisComponent.addInviteInfo(meeting.getId(), contactId);
+
+            MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+            messageSendDto.setMessageType(MessageTypeEnum.INVITE_MEMBER_MEETING.getValue());
+            messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
+            messageSendDto.setReceiveUserId(contactId);
+            MeetingInviteObj meetingInviteObj = new MeetingInviteObj();
+            meetingInviteObj.setMeetingName(meeting.getName());
+            meetingInviteObj.setInviteUserName(loginUser.getNickName());
+            meetingInviteObj.setMeetingId(loginUser.getCurrentMeetingId());
+            messageSendDto.setMessageContent(meetingInviteObj);
+            messageHandler.sendMessage(messageSendDto);
+        }
+    }
+
+    @Override
+    public void acceptInvite(LoginUser loginUser, Integer meetingId) {
+        Integer redisMeetingId = redisComponent.getInviteInfo(meetingId, loginUser.getUserId());
+        if (redisMeetingId == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "邀请信息已过期");
+        }
+        loginUser.setCurrentMeetingId(redisMeetingId);
+        loginUser.setCurrentNickName(loginUser.getNickName());
+        redisComponent.saveUserVO(loginUser);
+    }
+
+    @Override
+    public void updateMemberOpenVideo(Integer meetingId, Integer userId, Boolean openVideo) {
+        MeetingMemberObj meetingMember = redisComponent.getMeetingMember(meetingId, userId);
+        meetingMember.setOpenVideo(openVideo);
+        redisComponent.addMeeting(meetingId, meetingMember);
+
+        MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+        messageSendDto.setMessageType(MessageTypeEnum.MEETING_USER_VIDEO_CHANGE.getValue());
+        messageSendDto.setMessageContent(openVideo);
+        messageSendDto.setSendUserId(userId);
+        messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
+        messageSendDto.setMeetingId(meetingId);
+        messageHandler.sendMessage(messageSendDto);
     }
 
     private void addMeetingMember(Integer meetingId, Integer userId, String nickName, MemberTypeEnum memberType) {

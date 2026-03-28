@@ -1,9 +1,13 @@
 package xyz.kbws.service.impl;
 
+import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import xyz.kbws.common.ErrorCode;
+import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserContactApplyMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.mapper.UserMapper;
@@ -85,6 +89,18 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         }
 
         return result;
+    }
+
+    @Override
+    public void deleteContact(Integer userId, Integer contactId, Integer status) {
+        if (!ArrayUtil.contains(new Integer[]{ContactStatusEnum.BLACKLIST.getValue(), ContactStatusEnum.DELETE.getValue()}, status)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        LambdaUpdateWrapper<UserContact> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(UserContact::getUserId, userId)
+                .eq(UserContact::getContactId, contactId)
+                .set(UserContact::getStatus, status);
+        userContactMapper.update(null, updateWrapper);
     }
 }
 

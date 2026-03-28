@@ -17,4 +17,6 @@ public interface UserContactService extends IService<UserContact> {
     Page<ContactVO> findByPage(ContactQuery contactQuery);
 
     UserContactVO search(Integer userId, Integer contactUserId);
+
+    void deleteContact(Integer userId, Integer contactId, Integer status);
 }
