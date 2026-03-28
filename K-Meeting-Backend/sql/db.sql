@@ -86,3 +86,29 @@ create table userContact
     lastUpdateTime datetime   not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP comment '最后一次更新时间',
     primary key (userId, contactId)
 ) comment '联系人表';
+
+-- chatMessage 是当天热表，只保留“今天”的消息。
+-- 每天凌晨归档后，历史消息会被迁移到 chatMessage_yyyy_MM_dd。
+create table chatMessage
+(
+    id               bigint primary key comment '消息 ID',
+    meetingId        int        not null comment '会议 ID',
+    type             tinyint(1) not null comment '消息类型',
+    content          varchar(500) comment '消息内容',
+    sendUserId       int        not null comment '发送人 ID',
+    sendUserNickName varchar(20) comment '发送人昵称',
+    sendTime         bigint     not null comment '发送时间',
+    receiveType      tinyint(1) not null comment '发送类型',
+    receiveUserId    int comment '接收用户 id',
+    fileSize         bigint comment '文件大小',
+    fileName         varchar(200) comment '文件名',
+    fileType         tinyint(1) comment '文件类型',
+    fileSuffix       varchar(10) comment '文件后缀',
+    status           tinyint(1) comment '状态',
+    key idx_chatMessage_meetingId_sendTime (meetingId, sendTime),
+    key idx_chatMessage_sendTime (sendTime)
+) comment '聊天消息表';
+
+-- 历史归档表示例：
+-- chatMessage_2026_03_28
+-- chatMessage_2026_03_29

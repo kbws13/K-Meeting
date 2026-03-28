@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.ChatMessageMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.ChatMessage">
+            <id property="id" column="id" />
+            <result property="meetingId" column="meetingId" />
+            <result property="type" column="type" />
+            <result property="content" column="content" />
+            <result property="sendUserId" column="sendUserId" />
+            <result property="sendUserNickName" column="sendUserNickName" />
+            <result property="sendTime" column="sendTime" />
+            <result property="receiveType" column="receiveType" />
+            <result property="receiveUserId" column="receiveUserId" />
+            <result property="fileSize" column="fileSize" />
+            <result property="fileName" column="fileName" />
+            <result property="fileType" column="fileType" />
+            <result property="fileSuffix" column="fileSuffix" />
+            <result property="status" column="status" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,meetingId,type,content,sendUserId,sendUserNickName,
+        sendTime,receiveType,receiveUserId,fileSize,fileName,
+        fileType,fileSuffix,status
+    </sql>
+</mapper>
