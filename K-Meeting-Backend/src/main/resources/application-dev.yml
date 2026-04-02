@@ -44,6 +44,9 @@ message:
 
 ws:
   port: 8102
+  
+project:
+  folder: /Users/housenyao/Project/K-Meeting/K-Meeting-Backend
 
 # 接口文档配置
 knife4j:

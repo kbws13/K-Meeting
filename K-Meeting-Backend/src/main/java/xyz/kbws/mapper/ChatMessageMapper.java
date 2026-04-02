@@ -18,6 +18,26 @@ public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
 
     int batchInsertPartition(@Param("tableName") String tableName, @Param("entities") List<ChatMessage> entities);
 
+    int updatePartitionById(@Param("tableName") String tableName, @Param("entity") ChatMessage entity);
+
+    int deletePartitionById(@Param("tableName") String tableName, @Param("id") Long id);
+
+    List<ChatMessage> listPrivateHistoryByPageAcrossTables(@Param("tableNames") List<String> tableNames,
+                                                           @Param("meetingId") Integer meetingId,
+                                                           @Param("currentUserId") Integer currentUserId,
+                                                           @Param("targetUserId") Integer targetUserId,
+                                                           @Param("receiveType") Integer receiveType,
+                                                           @Param("maxMessageId") Long maxMessageId,
+                                                           @Param("offset") Long offset,
+                                                           @Param("limit") Long limit);
+
+    Long countPrivateHistoryAcrossTables(@Param("tableNames") List<String> tableNames,
+                                         @Param("meetingId") Integer meetingId,
+                                         @Param("currentUserId") Integer currentUserId,
+                                         @Param("targetUserId") Integer targetUserId,
+                                         @Param("receiveType") Integer receiveType,
+                                         @Param("maxMessageId") Long maxMessageId);
+
     List<ChatMessage> listByMeetingIdAcrossTables(@Param("tableNames") List<String> tableNames,
                                                   @Param("meetingId") Integer meetingId,
                                                   @Param("startSendTime") Long startSendTime,

@@ -15,4 +15,7 @@ public class AppConfig {
 
     @Value("${ws.port}")
     private Integer port;
+    
+    @Value("${project.folder}")
+    private String projectFolder;
 }

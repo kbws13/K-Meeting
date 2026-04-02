@@ -1,8 +1,14 @@
 package xyz.kbws.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.model.entity.ChatMessage;
+import xyz.kbws.model.query.ChatMessageQuery;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -11,6 +17,11 @@ import java.util.List;
  * @createDate 2026-03-28 18:54:48
  */
 public interface ChatMessageService extends IService<ChatMessage> {
+
+    /**
+     * 分页查询某场会议内与指定用户的私聊记录。
+     */
+    Page<ChatMessage> findPrivateHistoryByPage(ChatMessageQuery chatMessageQuery);
 
     /**
      * 按 sendTime 路由到当天分表保存消息。
@@ -37,4 +48,8 @@ public interface ChatMessageService extends IService<ChatMessage> {
      * @return 本次归档的消息数量
      */
     int archiveExpiredMessages();
+
+    void saveChatMessage(ChatMessage chatMessage);
+    
+    void uploadFile(MultipartFile file, Integer meetingId, Long messageId, Long sendTime) throws IOException;
 }

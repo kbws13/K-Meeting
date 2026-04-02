@@ -72,6 +72,68 @@
         </foreach>
     </insert>
 
+    <update id="updatePartitionById">
+        UPDATE `${tableName}`
+        SET meetingId = #{entity.meetingId},
+            type = #{entity.type},
+            content = #{entity.content},
+            sendUserId = #{entity.sendUserId},
+            sendUserNickName = #{entity.sendUserNickName},
+            sendTime = #{entity.sendTime},
+            receiveType = #{entity.receiveType},
+            receiveUserId = #{entity.receiveUserId},
+            fileSize = #{entity.fileSize},
+            fileName = #{entity.fileName},
+            fileType = #{entity.fileType},
+            fileSuffix = #{entity.fileSuffix},
+            status = #{entity.status}
+        WHERE id = #{entity.id}
+    </update>
+
+    <delete id="deletePartitionById">
+        DELETE FROM `${tableName}`
+        WHERE id = #{id}
+    </delete>
+
+    <sql id="PrivateHistoryWhereClause">
+        WHERE meetingId = #{meetingId}
+        AND receiveType = #{receiveType}
+        AND (
+        (sendUserId = #{currentUserId} AND receiveUserId = #{targetUserId})
+        OR
+        (sendUserId = #{targetUserId} AND receiveUserId = #{currentUserId})
+        )
+        <if test="maxMessageId != null">
+            AND id <![CDATA[ < ]]> #{maxMessageId}
+        </if>
+    </sql>
+
+    <select id="listPrivateHistoryByPageAcrossTables" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM (
+        <foreach collection="tableNames" item="tableName" separator=" UNION ALL ">
+            SELECT
+            <include refid="Base_Column_List"/>
+            FROM `${tableName}`
+            <include refid="PrivateHistoryWhereClause"/>
+        </foreach>
+        ) history
+        ORDER BY sendTime DESC, id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countPrivateHistoryAcrossTables" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM (
+        <foreach collection="tableNames" item="tableName" separator=" UNION ALL ">
+            SELECT id
+            FROM `${tableName}`
+            <include refid="PrivateHistoryWhereClause"/>
+        </foreach>
+        ) history
+    </select>
+
     <select id="listByMeetingIdAcrossTables" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM (

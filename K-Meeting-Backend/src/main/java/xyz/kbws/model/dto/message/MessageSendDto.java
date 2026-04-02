@@ -37,6 +37,8 @@ public class MessageSendDto<T> implements Serializable {
     private Integer fileType;
 
     private Long fileSize;
+    
+    private Integer status;
 
     private static final long serialVersionUID = -2494804091690537678L;
 }
