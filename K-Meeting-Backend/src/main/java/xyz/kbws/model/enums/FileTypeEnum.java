@@ -35,4 +35,13 @@ public enum FileTypeEnum {
         }
         return null;
     }
+
+    public static FileTypeEnum getByValue(Integer value) {
+        for (FileTypeEnum anEnum : FileTypeEnum.values()) {
+            if (anEnum.value.equals(value)) {
+                return anEnum;
+            }
+        }
+        return null;
+    }
 }
