@@ -127,6 +127,14 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
         messageSendDto.setMessageContent(status);
         messageHandler.sendMessage(messageSendDto);
     }
+
+    @Override
+    public Long loadContactApplyCount(Integer userId) {
+        LambdaQueryWrapper<UserContactApply> qw = new LambdaQueryWrapper<>();
+        qw.eq(UserContactApply::getReceiveUserId, userId)
+                .eq(UserContactApply::getStatus, ContactApplyStatusEnum.INIT);
+        return this.baseMapper.selectCount(qw);
+    }
 }
 
 

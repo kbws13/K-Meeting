@@ -106,4 +106,12 @@ public class ContactController {
         userContactService.deleteContact(loginUser.getUserId(), contactId, status);
         return ResultUtil.success(null);
     }
+
+    @ApiOperation("当前未处理的好友申请数量")
+    @PostMapping("/loadContactApplyCount")
+    @AuthCheck(mustRole = UserConstant.user)
+    public BaseResponse<Long> loadContactApplyCount(@CurrentUser LoginUser loginUser) {
+        Long Count = userContactApplyService.loadContactApplyCount(loginUser.getUserId());
+        return ResultUtil.success(Count);
+    }
 }

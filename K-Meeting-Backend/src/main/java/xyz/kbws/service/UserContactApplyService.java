@@ -17,4 +17,6 @@ public interface UserContactApplyService extends IService<UserContactApply> {
     Integer saveApply(UserContactApply userContactApply);
 
     void deal(Integer applyUserId, Integer userId, String nickName, Integer status);
+
+    Long loadContactApplyCount(Integer userId);
 }
