@@ -62,23 +62,26 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
 
     @Override
     public Integer saveApply(UserContactApply apply) {
-        LambdaQueryWrapper<UserContact> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(UserContact::getUserId, apply.getReceiveUserId()).eq(UserContact::getContactId, apply.getApplyUserId());
-        UserContact userContact = userContactMapper.selectOne(queryWrapper);
+        // 查询对方是否已将申请人拉黑（对方视角：receiveUserId -> applyUserId）
+        UserContact userContact = userContactMapper.selectByPrimaryKey(
+                apply.getReceiveUserId(), apply.getApplyUserId());
         if (userContact != null && ContactStatusEnum.BLACKLIST.getValue().equals(userContact.getStatus())) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "对方已将你拉黑");
         }
 
+        // 已经是好友，确保申请人侧关系也存在
         if (userContact != null && ContactStatusEnum.FRIEND.getValue().equals(userContact.getStatus())) {
-            LambdaUpdateWrapper<UserContact> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(UserContact::getUserId, apply.getApplyUserId())
-                    .eq(UserContact::getContactId, apply.getReceiveUserId())
-                    .set(UserContact::getStatus, ContactStatusEnum.FRIEND.getValue());
-            userContactMapper.update(null, updateWrapper);
+            UserContact myContact = new UserContact();
+            myContact.setUserId(apply.getApplyUserId());
+            myContact.setContactId(apply.getReceiveUserId());
+            myContact.setStatus(ContactStatusEnum.FRIEND.getValue());
+            myContact.setLastUpdateTime(new Date());
+            userContactMapper.updateByPrimaryKey(myContact);
             return ContactStatusEnum.FRIEND.getValue();
         }
 
-        UserContactApply userContactApply = userContactApplyMapper.selectOneByApplyUserIdAndReceiveUserId(apply.getApplyUserId(), apply.getReceiveUserId());
+        UserContactApply userContactApply = userContactApplyMapper.selectOneByApplyUserIdAndReceiveUserId(
+                apply.getApplyUserId(), apply.getReceiveUserId());
         if (userContactApply == null) {
             apply.setStatus(ContactApplyStatusEnum.INIT.getValue());
             this.save(apply);
@@ -88,7 +91,7 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
                     .set(UserContactApply::getStatus, ContactApplyStatusEnum.INIT.getValue());
             this.update(updateWrapper);
         }
-        // 发生消息
+        // 发送消息
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
         messageSendDto.setMessageType(MessageTypeEnum.USER_CONTACT_APPLY.getValue());
@@ -105,16 +108,22 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         if (ContactApplyStatusEnum.PASS.getValue().equals(status)) {
-            UserContact userContact = new UserContact();
-            userContact.setUserId(applyUserId);
-            userContact.setContactId(userId);
-            userContact.setStatus(ContactStatusEnum.FRIEND.getValue());
-            userContact.setLastUpdateTime(new Date());
-            this.userContactService.save(userContact);
+            Date now = new Date();
+            // 申请人 -> 被申请人
+            UserContact contact1 = new UserContact();
+            contact1.setUserId(applyUserId);
+            contact1.setContactId(userId);
+            contact1.setStatus(ContactStatusEnum.FRIEND.getValue());
+            contact1.setLastUpdateTime(now);
+            userContactMapper.insert(contact1);
 
-            userContact.setUserId(userId);
-            userContact.setContactId(applyUserId);
-            this.userContactService.save(userContact);
+            // 被申请人 -> 申请人
+            UserContact contact2 = new UserContact();
+            contact2.setUserId(userId);
+            contact2.setContactId(applyUserId);
+            contact2.setStatus(ContactStatusEnum.FRIEND.getValue());
+            contact2.setLastUpdateTime(now);
+            userContactMapper.insert(contact2);
         }
 
         apply.setStatus(status);
