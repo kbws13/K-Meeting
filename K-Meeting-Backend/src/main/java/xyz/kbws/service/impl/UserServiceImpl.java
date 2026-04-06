@@ -69,7 +69,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq("email", userRegisterDto.getEmail());
         User user = this.getOne(queryWrapper);
         if (user != null) {
-            return false;
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "邮箱已注册");
         }
         int userId = Integer.parseInt(RandomStringUtils.random(5, false, true));
         User newUser = new User();
