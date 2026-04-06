@@ -1,0 +1,194 @@
+import axios, {
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosRequestConfig
+} from 'axios'
+import { ElLoading } from 'element-plus'
+// @ts-ignore
+import Message from '../utils/Message'
+import router from '@/router'
+
+/**
+ * 接口返回的基础数据结构
+ */
+interface ResponseData<T = any> {
+  code: number
+  message: string
+  data: T
+}
+
+/**
+ * 扩展 Axios 请求配置，添加自定义属性
+ */
+interface CustomRequestConfig extends InternalAxiosRequestConfig {
+  showLoading?: boolean
+  showError?: boolean
+  errorCallback?: (responseData: ResponseData) => void
+}
+
+/**
+ * request 函数接收的参数配置
+ */
+interface RequestParams {
+  url: string
+  params?: Record<string, any>
+  dataType?: 'json' | string
+  showLoading?: boolean
+  responseType?: 'json' | 'blob' | 'arraybuffer'
+  showError?: boolean
+  errorCallback?: (responseData: ResponseData) => void
+  uploadProgressCallback?: (event: any) => void
+}
+
+// 声明全局 window.electron 避免编译错误
+declare global {
+  interface Window {
+    electron: {
+      ipcRenderer: {
+        invoke(channel: string, ...args: any[]): Promise<any>
+      }
+    }
+  }
+}
+
+const contentTypeForm = 'application/x-www-form-urlencoded;charset=UTF-8'
+const contentTypeJson = 'application/json'
+const responseTypeJson = 'json'
+
+let loading: any = null
+
+const instance: AxiosInstance = axios.create({
+  withCredentials: true,
+  // @ts-ignore
+  baseURL: (import.meta.env.PROD ? import.meta.env.VITE_DOMAIN : '') + '/api',
+  timeout: 10 * 1000
+})
+
+// 请求前拦截器
+instance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const customConfig = config as CustomRequestConfig
+    if (customConfig.showLoading) {
+      loading = ElLoading.service({
+        lock: true,
+        text: '加载中......',
+        background: 'rgba(0, 0, 0, 0.7)'
+      })
+    }
+    return config
+  },
+  (error) => {
+    if (error.config?.showLoading && loading) {
+      loading.close()
+    }
+    Message.error('请求发送失败')
+    return Promise.reject('请求发送失败')
+  }
+)
+
+// 请求后拦截器
+instance.interceptors.response.use(
+  async (response: AxiosResponse) => {
+    const config = response.config as CustomRequestConfig
+    const { showLoading, errorCallback, showError = true, responseType } = config
+
+    if (showLoading && loading) {
+      loading.close()
+    }
+
+    const responseData = response.data
+
+    // 处理二进制数据
+    if (responseType === 'arraybuffer' || responseType === 'blob') {
+      return responseData
+    }
+
+    // 正常请求
+    if (responseData.code === 0) {
+      return responseData
+    } else if (responseData.code === 901) {
+      // 登录超时
+      await window.electron.ipcRenderer.invoke('logout')
+      router.push('/')
+      return Promise.reject({ showError: false })
+    } else {
+      // 其他业务错误
+      if (errorCallback) {
+        errorCallback(responseData)
+      }
+      return Promise.reject({ showError: showError, msg: responseData.message })
+    }
+  },
+  (error) => {
+    const config = error.config as CustomRequestConfig
+    if (config?.showLoading && loading) {
+      loading.close()
+    }
+    return Promise.reject({ showError: true, msg: '网络异常' })
+  }
+)
+
+/**
+ * 封装的请求函数
+ */
+const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null> => {
+  const {
+    url,
+    params,
+    dataType,
+    showLoading = true,
+    responseType = responseTypeJson,
+    showError = true
+  } = config
+
+  const isJson = dataType != null && dataType === 'json'
+  let contentType = isJson ? contentTypeJson : contentTypeForm
+
+  // JSON 模式直接传原始对象；表单模式使用 FormData
+  let requestBody: FormData | Record<string, any> | undefined
+  if (isJson) {
+    requestBody = params
+  } else {
+    let formData = new FormData()
+    if (params) {
+      for (let key in params) {
+        formData.append(key, params[key] === undefined ? '' : params[key])
+      }
+    }
+    requestBody = formData
+  }
+
+  let userInfoJson = localStorage.getItem('userInfo')
+  const token = userInfoJson ? JSON.parse(userInfoJson).token : ''
+
+  let headers = {
+    'Content-Type': contentType,
+    'X-Requested-With': 'XMLHttpRequest',
+    token: token
+  }
+
+  return instance
+    .post(url, requestBody, {
+      onUploadProgress: (event) => {
+        if (config.uploadProgressCallback) {
+          config.uploadProgressCallback(event)
+        }
+      },
+      responseType: responseType as any,
+      headers: headers,
+      // 以下是传给拦截器的自定义配置
+      // @ts-ignore (Axios 原生配置中没有这些属性，需要通过类型断言或强制转换传递)
+      showLoading: showLoading,
+      errorCallback: config.errorCallback,
+      showError: showError
+    } as AxiosRequestConfig)
+    .catch((error) => {
+      if (error.showError) {
+        Message.error(error.msg)
+      }
+      return null
+    })
+}
+
+export default request

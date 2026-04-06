@@ -1,15 +1,22 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Tray, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { saveWindow } from './windowProxy'
+import { onLoginOrRegister, onWinTitleOp, onLoginSuccess } from './ipc'
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 375,
+    height: 365,
     show: false,
     autoHideMenuBar: true,
+    resizable: false,
+    frame: false,
+    transparent: false,
+    maximizable: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -17,9 +24,41 @@ function createWindow(): void {
     }
   })
 
+  saveWindow("main", mainWindow)
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
+
+  /**
+   * 初始化系统托盘逻辑
+   */
+
+  const tray = new Tray(icon);
+
+  // 定义菜单模板，使用 MenuItemConstructorOptions 接口进行类型约束
+  const contextMenuTemplate: MenuItemConstructorOptions[] = [
+    {
+      label: '退出',
+      click: () => {
+        app.quit();
+      }
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(contextMenuTemplate);
+
+  tray.setToolTip("EasyMeeting");
+  tray.setContextMenu(menu);
+
+  // 托盘点击事件
+  tray.on("click", () => {
+    if (mainWindow) {
+      // 从任务栏显示并唤起窗口
+      mainWindow.setSkipTaskbar(false);
+      mainWindow.show();
+    }
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -34,6 +73,12 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
+onLoginOrRegister();
+
+onWinTitleOp();
+
+onLoginSuccess();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
