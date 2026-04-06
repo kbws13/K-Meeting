@@ -112,3 +112,15 @@ create table chatMessage
 -- 历史归档表示例：
 -- chatMessage_2026_03_28
 -- chatMessage_2026_03_29
+
+create table appUpdate
+(
+    id          int primary key auto_increment comment 'ID',
+    version     varchar(10)  not null comment '版本号',
+    updateDesc  varchar(500) not null comment '版本更新说明',
+    status      tinyint(1),
+    grayscaleId varchar(1000),
+    fileType    tinyint(1)   not null comment '文件类型',
+    outerLink   varchar(200) comment '外链',
+    createTime  datetime     not null default CURRENT_TIMESTAMP comment '创建时间'
+) comment '应用更新表';
