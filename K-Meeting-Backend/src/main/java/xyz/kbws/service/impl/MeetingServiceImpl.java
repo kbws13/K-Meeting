@@ -191,9 +191,18 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean finishMeeting(Integer meetingId, Integer currentUserId) {
+        if (meetingId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "会议 ID 不能为空");
+        }
         Meeting meeting = this.getById(meetingId);
+        if (meeting == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "会议不存在");
+        }
         if (currentUserId != null && !meeting.getCreateUserId().equals(currentUserId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        if (MeetingStatusEnum.FINISHED.getValue().equals(meeting.getStatus())) {
+            return true;
         }
         meeting.setStatus(MeetingStatusEnum.FINISHED.getValue());
         meeting.setEndTime(new Date());
@@ -219,6 +228,9 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         List<MeetingMemberObj> meetingMemberList = redisComponent.getMeetingMemberList(meetingId);
         for (MeetingMemberObj meetingMemberObj : meetingMemberList) {
             LoginUser loginUser = redisComponent.getLoginUserById(meetingMemberObj.getUserId());
+            if (loginUser == null) {
+                continue;
+            }
             loginUser.setCurrentMeetingId(null);
             redisComponent.saveUserVO(loginUser);
         }

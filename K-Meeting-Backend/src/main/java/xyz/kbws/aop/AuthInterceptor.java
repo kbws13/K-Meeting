@@ -37,6 +37,9 @@ public class AuthInterceptor {
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         if (StrUtil.isNotBlank(mustRole)) {
             UserRoleEnum mustUserRoleEnum = UserRoleEnum.getEnumByValue(mustRole);
+            if (mustUserRoleEnum == null) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
             // 当前登录用户
             UserVO userVO = redisComponent.getLoginUser(request.getHeader("token"));
             if (userVO == null) {
