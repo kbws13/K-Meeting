@@ -5,18 +5,25 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.kbws.annotation.CurrentUser;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.common.ResultUtil;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.model.dto.user.UserLoginDto;
 import xyz.kbws.model.dto.user.UserRegisterDto;
+import xyz.kbws.model.entity.User;
 import xyz.kbws.model.vo.CheckCodeVO;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.UserService;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 /**
  * @author kbws
@@ -69,6 +76,24 @@ public class UserController {
     @PostMapping("/login")
     public BaseResponse<UserVO> login(@RequestBody UserLoginDto userLoginDto) {
         UserVO userVO = userService.login(userLoginDto);
+        return ResultUtil.success(userVO);
+    }
+
+    @ApiOperation("修改密码")
+    @PostMapping("/changePassword")
+    public BaseResponse<Boolean> changePassword(@CurrentUser LoginUser loginUser, @NotEmpty String password, @NotEmpty String newPassword) {
+        Boolean res = userService.changePassword(loginUser.getUserId(), password, newPassword);
+        return ResultUtil.success(res);
+    }
+    
+    @ApiOperation(value = "更新")
+    @PostMapping("/update")
+    public BaseResponse<UserVO> update(@CurrentUser LoginUser loginUser, MultipartFile avatar, @NotEmpty String nickName, @NotNull Integer sex) throws IOException {
+        User user = new User();
+        user.setNickName(nickName);
+        user.setSex(sex);
+        user.setId(loginUser.getUserId());
+        UserVO userVO = userService.updateUserInfo(avatar, user);
         return ResultUtil.success(userVO);
     }
 }

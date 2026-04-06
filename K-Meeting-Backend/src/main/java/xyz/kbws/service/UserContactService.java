@@ -6,6 +6,8 @@ import xyz.kbws.model.query.ContactQuery;
 import xyz.kbws.model.vo.ContactVO;
 import xyz.kbws.model.vo.UserContactVO;
 
+import java.util.List;
+
 /**
  * @author housenyao
  * @description 针对表【userContact(联系人表)】的数据库操作Service
@@ -15,6 +17,8 @@ public interface UserContactService{
 
     /** 插入一条联系人记录 */
     int insert(UserContact userContact);
+
+    List<UserContact> listByUserId(Integer userId);
 
     Page<ContactVO> findByPage(ContactQuery contactQuery);
 

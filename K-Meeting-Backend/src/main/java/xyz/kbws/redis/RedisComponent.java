@@ -2,6 +2,7 @@ package xyz.kbws.redis;
 
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.RedisConstant;
+import xyz.kbws.model.entity.SystemSetting;
 import xyz.kbws.model.enums.MeetingMemberStatus;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.entity.LoginUser;
@@ -75,6 +76,19 @@ public class RedisComponent {
         return getLoginUser(token);
     }
 
+    public void cleanTokenByUserId(Integer userId) {
+        if (userId == null) {
+            return;
+        }
+        String userIdKey = buildUserIdKey(userId);
+        String token = (String) redisUtils.get(userIdKey);
+        if (token == null) {
+            redisUtils.delete(userIdKey);
+            return;
+        }
+        redisUtils.delete(RedisConstant.WS_TOKEN + token, userIdKey);
+    }
+
     public void resetUserVO(LoginUser loginUser) {
         this.saveUserVO(loginUser);
     }
@@ -118,5 +132,15 @@ public class RedisComponent {
 
     public Integer getInviteInfo(Integer meetingId, Integer userId) {
         return (Integer) redisUtils.get(RedisConstant.INVITE_MEMBER + userId + meetingId);
+    }
+
+    public void saveSystemSetting(SystemSetting systemSetting) {
+        redisUtils.set(RedisConstant.SYSTEM_SETTING, systemSetting);
+    }
+    
+    public SystemSetting getSystemSetting() {
+        SystemSetting systemSetting = (SystemSetting) redisUtils.get(RedisConstant.SYSTEM_SETTING);
+        systemSetting = systemSetting == null ? new SystemSetting() : systemSetting;
+        return systemSetting;
     }
 }

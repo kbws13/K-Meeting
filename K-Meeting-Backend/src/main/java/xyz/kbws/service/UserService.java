@@ -1,10 +1,13 @@
 package xyz.kbws.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.model.dto.user.UserLoginDto;
 import xyz.kbws.model.dto.user.UserRegisterDto;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.vo.UserVO;
+
+import java.io.IOException;
 
 /**
  * @author housenyao
@@ -15,4 +18,8 @@ public interface UserService extends IService<User> {
     boolean register(UserRegisterDto userRegisterDto);
 
     UserVO login(UserLoginDto userLoginDto);
+
+    Boolean changePassword(Integer userId, String password, String newPassword);
+    
+    UserVO updateUserInfo(MultipartFile avatar, User user) throws IOException;
 }

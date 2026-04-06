@@ -269,10 +269,9 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     @Override
     public void inviteMember(LoginUser loginUser, String selectContactIds) {
         List<Integer> contactIds = Arrays.stream(selectContactIds.split(",")).map(Integer::valueOf).collect(Collectors.toList());
-        LambdaQueryWrapper<UserContact> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(UserContact::getUserId, loginUser.getUserId())
-                .eq(UserContact::getStatus, ContactStatusEnum.FRIEND.getValue());
-        List<UserContact> userContacts = userContactService.list(queryWrapper);
+        List<UserContact> userContacts = userContactService.listByUserId(loginUser.getUserId()).stream()
+                .filter(item -> ContactStatusEnum.FRIEND.getValue().equals(item.getStatus()))
+                .collect(Collectors.toList());
         List<Integer> contactIdList = userContacts.stream().map(UserContact::getContactId).collect(Collectors.toList());
         if (!new HashSet<>(contactIdList).containsAll(contactIds)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);

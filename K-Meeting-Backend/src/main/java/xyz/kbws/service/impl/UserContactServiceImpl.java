@@ -45,6 +45,11 @@ public class UserContactServiceImpl implements UserContactService {
     }
 
     @Override
+    public List<UserContact> listByUserId(Integer userId) {
+        return userContactMapper.selectByUserId(userId);
+    }
+
+    @Override
     public Page<ContactVO> findByPage(ContactQuery contactQuery) {
         Page<ContactVO> page = new Page<>(contactQuery.getCurrent(), contactQuery.getPageSize());
         List<ContactVO> records = userContactMapper.findListByPage(page, contactQuery);
@@ -106,7 +111,6 @@ public class UserContactServiceImpl implements UserContactService {
         userContactMapper.updateByPrimaryKey(userContact);
     }
 }
-
 
 
 
