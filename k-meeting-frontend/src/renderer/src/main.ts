@@ -8,6 +8,8 @@ import '@/assets/base.scss'
 
 import Titlebar from '@/components/TitleBar.vue'
 import Header from '@/components/Header.vue'
+import NoData from '@/components/NoData.vue'
+import Dialog from '@/components/Dialog.vue'
 
 import Request from "@/utils/Request"
 import { Api } from "@/utils/Api"
@@ -24,6 +26,8 @@ app.use(router)
 
 app.component("Header", Header)
 app.component("Titlebar", Titlebar)
+app.component("NoData", NoData)
+app.component("Dialog", Dialog)
 
 app.config.globalProperties.Request = Request;
 app.config.globalProperties.Api = Api;

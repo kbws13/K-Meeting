@@ -49,15 +49,6 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 /**
- * 跳转到指定菜单路径
- */
-const jumpMenu = (item: MenuItem) => {
-  if (item.path) {
-    router.push(item.path)
-  }
-}
-
-/**
  * 菜单项接口定义
  */
 interface MenuItem {
@@ -114,6 +105,13 @@ const leftBottomMenus: MenuItem[] = [
     onlyAdmin: true,
   }
 ];
+
+const jumpMenu = (item: MenuItem) => {
+  if (item.btnType === 'admin') {
+    return
+  }
+  router.push(item.path)
+}
 </script>
 
 <style scoped lang="scss">

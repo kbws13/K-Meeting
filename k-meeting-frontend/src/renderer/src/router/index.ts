@@ -20,7 +20,15 @@ const router = createRouter({
         meta: {
           code: "meeting"
         }
-      }]
+      },{
+        path: '/contact',
+        name: "联系人",
+        component: () => import('@/pages/contact/Contact.vue'),
+        meta: {
+          code: "contact"
+        }
+      }
+      ]
     }
   ]
 })

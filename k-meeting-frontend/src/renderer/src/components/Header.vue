@@ -22,7 +22,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showMax: true,
+  showMax: false,
   closeType: 1,
   showBottomBorder: false
 });

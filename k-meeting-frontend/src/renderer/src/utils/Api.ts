@@ -43,7 +43,7 @@ const Api = {
   // --- 联系人相关 ---
   searchContact: "/contact/search", // 搜索联系人
   contactApply: "/contact/apply", // 申请联系人
-  loadContactUser: "/userContact/loadContactUser", // 获取联系人
+  loadContactUser: "/contact/load", // 获取联系人
   loadContactApply: "/contact/loadContactApply", // 申请列表
   dealWithApply: "/contact/deal", // 处理联系人
   delContact: "/contact/delete", // 删除联系人
