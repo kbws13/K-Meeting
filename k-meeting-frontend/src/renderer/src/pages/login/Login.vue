@@ -1,7 +1,7 @@
 <template>
   <Header :showMax="true" :closeType="0"></Header>
   <div class="loading-panel" v-if="showLoading">
-    <img src="../../assets/loading.gif" alt="loading" />
+    <img src="../../assets/images/loading.gif" alt="loading" />
     <div>正在登录......</div>
   </div>
   <div class="login-form" v-else>

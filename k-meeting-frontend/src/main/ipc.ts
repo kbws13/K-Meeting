@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { getWindow } from "./windowProxy";
 import { initWs } from './wsClient'
+import store from './store'
 
 /**
  * 处理登录或注册窗口尺寸调整的函数
@@ -76,6 +77,8 @@ const onLoginSuccess = () => {
     mainWindow.setMinimumSize(720, 480)
     mainWindow.setSize(720, 480)
     mainWindow.setResizable(false)
+    store.initUserId(userInfo.userId)
+    store.setData("userInfo", userInfo)
     initWs(wsUrl + userInfo.token)
   })
 }

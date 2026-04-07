@@ -48,7 +48,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showMin: true,
-  showMax: true,
+  showMax: false,
   showClose: true,
   closeType: 1,
   styleTop: 0,
