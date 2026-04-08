@@ -40,13 +40,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { getCurrentInstance, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useUserInfoStore } from '@/stores/UserInfoStore'
+import { useContactStore } from '../stores/UserContactStore'
+import { mitter } from '../eventbus/eventBus'
 
+const { proxy } = getCurrentInstance() as any
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const contactStore = useContactStore()
 
 /**
  * 菜单项接口定义
@@ -112,6 +116,58 @@ const jumpMenu = (item: MenuItem) => {
   }
   router.push(item.path)
 }
+
+const listenMessage = () => {
+  window.electron.ipcRenderer.on('mainMessage', (e, messageObj) => {
+    console.log("收到消息", messageObj)
+    switch (messageObj.messageType) {
+      case 8:
+        contactStore.updateLastUpdateTime()
+        break
+      case 12:
+        let result = ''
+        if (messageObj.messageContent == 1) {
+          mitter.emit('reloadContact')
+          result = '已同意你的申请'
+        } else if (messageObj.messageContent == 2) {
+          result = '已拒绝你的申请'
+        } else if (messageObj.messageContent == 3) {
+          result = '已将你拉黑'
+        }
+        proxy.Alert(`【${messageObj.sendUserNickName}${result}】`)
+        break
+    }
+  })
+}
+
+const loadContactApplyCount = async () => {
+  let result = await proxy.Request({
+    url: proxy.Api.loadContactApplyDealWithCount
+  })
+  if (!result) {
+    return
+  }
+  leftTopMenus.value[1].messageCount = result.data
+}
+
+watch(
+  () => contactStore.lastUpdateTime,
+  (newVal, oldVal) => {
+    if (!newVal) {
+      return
+    }
+    loadContactApplyCount()
+  },
+  { immediate: true, deep: true }
+)
+
+onMounted(() => {
+  listenMessage()
+})
+
+onUnmounted(() => {
+  window.electron.ipcRenderer.removeAllListeners('mainMessage')
+})
 </script>
 
 <style scoped lang="scss">

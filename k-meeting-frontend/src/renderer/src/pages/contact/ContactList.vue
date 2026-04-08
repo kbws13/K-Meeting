@@ -31,8 +31,9 @@
 <script setup lang="ts">
 import ApplyContact from './ApplyContact.vue'
 import { Search } from '@element-plus/icons-vue'
-import { ref, reactive, getCurrentInstance, nextTick, ComponentInternalInstance } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, ComponentInternalInstance, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { mitter } from '@/eventbus/eventBus.ts'
 
 // 定义联系人对象接口
 interface ContactUser {
@@ -78,8 +79,8 @@ const loadContactUser = async (): Promise<void> => {
   }
 
   // 赋值原始数据及展示数据
-  sourceContactList.value = result.data
-  contactList.value = result.data
+  sourceContactList.value = result.data.records
+  contactList.value = result.data.records
 }
 
 // 初始化加载数据
@@ -89,6 +90,14 @@ const applyContactRef = ref()
 const applyContact = () => {
   applyContactRef.value.show()
 }
+
+onMounted(() => {
+  mitter.on('reloadContact', loadContactUser)
+})
+
+onUnmounted(() => {
+  mitter.off('reloadContact', loadContactUser)
+})
 </script>
 
 

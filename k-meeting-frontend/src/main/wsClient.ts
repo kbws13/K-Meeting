@@ -67,6 +67,17 @@ const connectWs = (): void => {
   ws.onmessage = (event: MessageEvent) => {
     const data = JSON.parse(event.data);
     console.log('收到ws消息', data);
+    const meetingWin = getWindow("meeting");
+    const mainWin = getWindow("main");
+    switch (data.messageType) {
+      case 8: // 好友申请
+      case 12: // 处理好友申请
+        if (!mainWin) {
+          return;
+        }
+        mainWin.webContents.send("mainMessage", data);
+        break;
+    }
   };
 
   ws.onerror = () => {

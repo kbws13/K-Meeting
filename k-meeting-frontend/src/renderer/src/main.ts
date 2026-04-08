@@ -16,6 +16,7 @@ import { Api } from "@/utils/Api"
 import Utils from "@/utils/utils"
 import Verify from "@/utils/verify"
 import Message from "@/utils/Message"
+import { Confirm, Alert } from '@/utils/Confirm'
 import * as Pinia from "pinia"
 
 
@@ -34,5 +35,7 @@ app.config.globalProperties.Api = Api;
 app.config.globalProperties.Utils = Utils;
 app.config.globalProperties.Verify = Verify;
 app.config.globalProperties.Message = Message;
+app.config.globalProperties.Confirm = Confirm;
+app.config.globalProperties.Alert = Alert;
 
 app.mount('#app')
