@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent } from "electron";
 import { getWindow } from "./windowProxy";
 import { initWs } from './wsClient'
 import store from './store'
@@ -83,8 +83,56 @@ const onLoginSuccess = () => {
   })
 }
 
+const onSaveSysSetting = () => {
+  ipcMain.handle("saveSysSetting", (e: Electron.IpcMainEvent, sysSetting) => {
+    saveSysSetting(sysSetting);
+  })
+}
+
+/**
+ * 屏幕源信息接口
+ */
+interface ScreenSource {
+  id: string;
+  name: string;
+  displayId: string;
+  thumbnail: string;
+}
+
+/**
+ * 监听获取屏幕资源的 IPC 请求
+ */
+const onGetScreenSource = (): void => {
+  // 使用 handle 监听，渲染进程通过 invoke 调用
+  ipcMain.handle("getScreenSource", async (
+    event: IpcMainInvokeEvent,
+    opts: SourcesOptions
+  ): Promise<ScreenSource[]> => {
+
+    // 1. 调用 Electron 底层 API 获取屏幕和窗口资源
+    const sources = await desktopCapturer.getSources(opts);
+
+    // 2. 过滤并格式化数据
+    return sources
+      .filter(source => {
+        // 过滤掉尺寸过小（通常是无效或最小化窗口）的资源
+        const size = source.thumbnail.getSize();
+        return size.width > 10 && size.height > 10;
+      })
+      .map(source => ({
+        id: source.id,
+        name: source.name,
+        // 注意：底层字段名是 display_id，此处映射为前端易用的 camelCase
+        displayId: source.display_id,
+        // 将 NativeImage 对象转换为 Base64 字符串，方便渲染进程直接在 <img> 或 <Cover> 中展示
+        thumbnail: source.thumbnail.toDataURL()
+      }));
+  });
+};
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
-  onLoginSuccess
+  onLoginSuccess,
+  onGetScreenSource,
 };

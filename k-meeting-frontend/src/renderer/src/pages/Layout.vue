@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance, ref } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '../stores/UserContactStore'

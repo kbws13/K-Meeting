@@ -27,7 +27,14 @@ const router = createRouter({
         meta: {
           code: "contact"
         }
-      }
+      },{
+        path: '/screencap',
+        name: "录屏",
+        component: () => import('@/pages/screencap/ScreenCap.vue'),
+        meta: {
+          code: "screencap"
+        }
+      },
       ]
     }
   ]
