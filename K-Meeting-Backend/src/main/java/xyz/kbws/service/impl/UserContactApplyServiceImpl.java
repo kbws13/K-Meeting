@@ -130,8 +130,9 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
         this.updateById(apply);
 
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
+        messageSendDto.setSendUserNickName(nickName);
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
-        messageSendDto.setMessageType(MessageTypeEnum.USER_CONTACT_APPLY.getValue());
+        messageSendDto.setMessageType(MessageTypeEnum.USER_CONTACT_ACCESS.getValue());
         messageSendDto.setReceiveUserId(applyUserId);
         messageSendDto.setMessageContent(status);
         messageHandler.sendMessage(messageSendDto);

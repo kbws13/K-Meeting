@@ -21,6 +21,7 @@ public enum MessageTypeEnum {
     INVITE_MEMBER_MEETING(9, "邀请入会"),
     FORCE_OFF_LINE(10, "强制下线"),
     MEETING_USER_VIDEO_CHANGE(11, "用户视频改变"),
+    USER_CONTACT_ACCESS(12, "好友申请已处理")
     ;
 
     private Integer value;
