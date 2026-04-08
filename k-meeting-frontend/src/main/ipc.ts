@@ -1,7 +1,8 @@
-import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent } from "electron";
+import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell } from 'electron'
 import { getWindow } from "./windowProxy";
 import { initWs } from './wsClient'
 import store from './store'
+import { startRecording, stopRecording } from './recording'
 
 /**
  * 处理登录或注册窗口尺寸调整的函数
@@ -130,9 +131,35 @@ const onGetScreenSource = (): void => {
   });
 };
 
+const onStartRecoding = () => {
+  ipcMain.handle("startRecording", (e, { displayId, mic }) => {
+    const sender = e.sender
+    startRecording(sender, displayId, mic)
+  })
+}
+
+const onStopRecording = () => {
+  ipcMain.handle("stopRecording", () => {
+    stopRecording()
+  })
+}
+
+const onOpenLocalFile = () => {
+  ipcMain.on("openLocalFile", (e: Electron.IpcMainEvent, { localFilePath, folder = false }) => {
+    if (folder) {
+      shell.openPath(localFilePath);
+    } else {
+      shell.showItemInFolder(localFilePath);
+    }
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
   onLoginSuccess,
   onGetScreenSource,
+  onStartRecoding,
+  onStopRecording,
+  onOpenLocalFile,
 };

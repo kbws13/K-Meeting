@@ -3,7 +3,14 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
-import { onLoginOrRegister, onWinTitleOp, onLoginSuccess, onGetScreenSource } from './ipc'
+import {
+  onLoginOrRegister,
+  onWinTitleOp,
+  onLoginSuccess,
+  onGetScreenSource,
+  onStartRecoding,
+  onStopRecording, onOpenLocalFile
+} from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
 
 function createWindow(): void {
@@ -81,6 +88,12 @@ onWinTitleOp();
 onLoginSuccess();
 
 onGetScreenSource();
+
+onStartRecoding();
+
+onStopRecording();
+
+onOpenLocalFile();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

@@ -22,14 +22,90 @@
         ></ScreenSelect>
       </div>
     </template>
+    <template v-else>
+      <div class="recording-panel">
+        <div v-if="recordStatus == 1" class="status-tips">开始录制中,请稍后...</div>
+
+        <div v-if="recordStatus == 3" class="status-tips">停止录制中,请稍后...</div>
+
+        <div class="recording-time" v-if="recordStatus == 2">
+          录制中：{{ proxy.Utils.convertSecondsToHMS(recordTime, true) }}
+        </div>
+
+        <div
+          :class="['iconfont icon-stop', recordTime < 3 ? 'stop-disable' : '']"
+          @click="stopRecord"
+          v-if="recordStatus == 2"
+        >
+          停止录制
+        </div>
+
+        <div v-if="recordStatus == 4">
+          <div class="file-panel">
+            <div class="file-path" :title="filePath">{{ filePath }}</div>
+            <div class="iconfont icon-folder" @click="openFile">打开文件</div>
+          </div>
+          <el-button type="primary" @click="restart">
+            <span class="iconfont icon-narrow-left"></span>继续录制
+          </el-button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import ScreenSelect from './ScreenSelect.vue'
-import { ref } from 'vue'
+import { getCurrentInstance, onMounted, ref } from 'vue'
+const { proxy } = getCurrentInstance()
 
+const screenDisplayId = ref()
+const screenDisplayIdHandler = (_screenDisplayId) => {
+  screenDisplayId.value = _screenDisplayId
+}
+
+// 0初始化 1开始录制 2录制中 3停止录制中 4 停止录制
 const recordStatus = ref(0)
+const startRecord = () => {
+  recordStatus.value = 1
+  window.electron.ipcRenderer.invoke('startRecording', {
+    displayId: screenDisplayId.value,
+    mic: ''
+  })
+}
+
+const stopRecord = () => {
+  recordStatus.value = 3
+  window.electron.ipcRenderer.invoke('stopRecording')
+}
+
+const recordTime = ref(1)
+const filePath = ref()
+const listenRecordTime = () => {
+  window.electron.ipcRenderer.on('recordTime', (e, _recordTime) => {
+    recordTime.value = _recordTime
+    if (_recordTime == 1) {
+      recordStatus.value = 2
+    }
+  })
+  window.electron.ipcRenderer.on('finishRecording', (e, _filePath) => {
+    recordStatus.value = 4
+    filePath.value = _filePath
+  })
+}
+
+const openFile = () => {
+  window.electron.ipcRenderer.send('openLocalFile', { localFilePath: filePath.value })
+}
+
+const restart = () => {
+  recordStatus.value = 0
+  recordTime.value = 0
+}
+
+onMounted(() => {
+  listenRecordTime();
+})
 </script>
 
 <style scoped lang="scss">
