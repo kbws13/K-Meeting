@@ -43,7 +43,11 @@ const router = createRouter({
         }
       }
       ]
-    }
+    },{
+      path: '/meeting',
+      name: '会议详情',
+      component: () => import('@/views/meeting/meeting/Meeting.vue')
+    },
   ]
 })
 

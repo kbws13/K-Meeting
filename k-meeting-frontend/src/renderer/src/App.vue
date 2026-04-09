@@ -7,6 +7,18 @@
 <script lang="ts" setup>
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
+
+import { useUserInfoStore } from './stores/UserInfoStore'
+import { onMounted } from 'vue'
+
+const userInfoStore = useUserInfoStore()
+const saveUserInfoStore = async () => {
+  userInfoStore.setInfo(JSON.parse(localStorage.getItem('userInfo')) || {})
+}
+
+onMounted(() => {
+  saveUserInfoStore()
+})
 </script>
 
 <style lang="scss"></style>

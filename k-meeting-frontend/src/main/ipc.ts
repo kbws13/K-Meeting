@@ -1,8 +1,11 @@
 import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell, dialog } from 'electron'
-import { getWindow } from "./windowProxy";
+import { delWindow, getWindow, saveWindow } from './windowProxy'
 import { initWs, logout } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
+import { saveSysSetting } from './sysSetting'
+import { is } from '@electron-toolkit/utils'
+import { join } from 'path'
 
 /**
  * 处理登录或注册窗口尺寸调整的函数
@@ -148,7 +151,6 @@ const onOpenLocalFile = () => {
   })
 }
 
-
 const onSaveSysSetting = () => {
   ipcMain.handle("saveSysSetting", (e: Electron.IpcMainEvent, sysSetting) => {
     saveSysSetting(sysSetting);
@@ -187,6 +189,118 @@ const onLogout = () => {
   })
 }
 
+const openWindow = ({ windowId, title = "详情", path, width = 960, height = 720, data, maximizable = false }) => {
+  let newwindow = getWindow(windowId);
+  const paramsArray = [];
+
+  // 1. URL 参数拼接逻辑
+  if (data && Object.keys(data).length > 0) {
+    // 检查 path 是否已有参数，没有则补 "?"，有则补 "&"
+    path = path.endsWith("?") ? path : path + "?";
+    for (let i in data) {
+      paramsArray.push(`${i}=${encodeURIComponent(data[i])}`);
+    }
+    path = path + paramsArray.join("&");
+  }
+
+  // 2. 创建新窗口实例
+  if (!newwindow) {
+    newwindow = new BrowserWindow({
+      width,
+      height,
+      minHeight: height,
+      minWidth: width,
+      show: false,             // 初始化不显示，等 ready-to-show 再显示，防止白屏
+      autoHideMenuBar: true,   // 自动隐藏菜单栏
+      frame: false,            // 无边框窗口
+      fullscreenable: false,
+      resizable: maximizable,
+      maximizable,
+      // Linux 平台下特殊处理图标
+      ...(process.platform === 'linux' ? { icon } : {}),
+      webPreferences: {
+        preload: join(__dirname, '../preload/index.js'), // 注入预加载脚本
+        sandbox: false         // 禁用沙箱以允许特定权限
+      }
+    })
+
+    saveWindow(windowId, newwindow);
+    // 3. 根据环境加载内容
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      // 开发环境：加载 Vite/Webpack 的热更新地址
+      newwindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`);
+    } else {
+      // 生产环境：加载本地 HTML 文件
+      newwindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` });
+    }
+
+    // 4. 窗口生命周期监听
+    newwindow.on('ready-to-show', () => {
+      newwindow.show();
+    })
+
+    // 拦截关闭事件（实现点击关闭时隐藏窗口而非真正销毁，或执行清理逻辑）
+    newwindow.on('close', (event) => {
+      if (newwindow.forceClose !== undefined && !newwindow.forceClose) {
+        preCloseWindow(windowId);
+        event.preventDefault(); // 阻止默认关闭行为
+      }
+    })
+
+    newwindow.on("closed", () => {
+      closewindow();
+      delWindow(windowId);
+    })
+
+    // 监听最大化/还原，通知渲染进程更新 UI（例如切换最大化图标）
+    newwindow.on("maximize", (e) => {
+      newwindow.webContents.send("winIsMax", true);
+    })
+
+    newwindow.on("unmaximize", (e) => {
+      newwindow.webContents.send("winIsMax", false);
+    })
+  } else {
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      // 开发环境：加载 Vite/Webpack 的热更新地址
+      newwindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`);
+    } else {
+      // 生产环境：加载本地 HTML 文件
+      newwindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` });
+    }
+    newwindow.show()
+    newwindow.setSkipTaskbar(false)
+  }
+}
+
+const closewindow = () => {
+  const mainwindow = getWindow("main");
+  if (mainwindow) {
+    mainwindow.webContents.send("closeWindow", { windowId });
+  }
+}
+
+const preCloseWindow = (windowId) => {
+  const win = getWindow(windowId);
+  if (win) {
+    win.webContents.send("preCloseWindow");
+  }
+}
+
+const onOpenWindow = () => {
+  ipcMain.on("openWindow", (e, { title, windowId, path, width, height, data, maximizable }) => {
+    openWindow({
+      title,
+      windowId,
+      path,
+      width,
+      height,
+      data,
+      maximizable
+    })
+  });
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -199,4 +313,5 @@ export {
   onGetSysSetting,
   onChangeLocalFolder,
   onLogout,
+  onOpenWindow,
 };

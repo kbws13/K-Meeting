@@ -100,7 +100,7 @@ const open = (): void => {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .cust-dialog {
   padding: 0px !important;
   margin-bottom: 5px !important;

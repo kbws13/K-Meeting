@@ -5,7 +5,7 @@
     :buttons="dialogConfig.buttons"
     width="400px"
     :showCancel="false"
-    @close="dialogConfig.show == false"
+    @close="dialogConfig.show = false"
   >
     <div class="search-panel">
       <el-input
