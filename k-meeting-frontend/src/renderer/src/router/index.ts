@@ -34,7 +34,14 @@ const router = createRouter({
         meta: {
           code: "screencap"
         }
-      },
+      },{
+        path: '/setting',
+        name: "设置",
+        component: () => import('@/views/setting/Setting.vue'),
+        meta: {
+          code: "setting"
+        }
+      }
       ]
     }
   ]

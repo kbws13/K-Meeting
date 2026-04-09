@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults, defineProps, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // 1. 定义 Props 接口
 interface Props {

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell } from 'electron'
+import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell, dialog } from 'electron'
 import { getWindow } from "./windowProxy";
 import { initWs } from './wsClient'
 import store from './store'
@@ -84,12 +84,6 @@ const onLoginSuccess = () => {
   })
 }
 
-const onSaveSysSetting = () => {
-  ipcMain.handle("saveSysSetting", (e: Electron.IpcMainEvent, sysSetting) => {
-    saveSysSetting(sysSetting);
-  })
-}
-
 /**
  * 屏幕源信息接口
  */
@@ -154,6 +148,39 @@ const onOpenLocalFile = () => {
   })
 }
 
+
+const onSaveSysSetting = () => {
+  ipcMain.handle("saveSysSetting", (e: Electron.IpcMainEvent, sysSetting) => {
+    saveSysSetting(sysSetting);
+  })
+}
+
+const onGetSysSetting = () => {
+  ipcMain.handle("getSysSetting", (e: Electron.IpcMainEvent, sysSetting) => {
+    return getSysSetting();
+  })
+}
+
+const onChangeLocalFolder = () => {
+  ipcMain.handle("changeLocalFolder", async (e, { localFilePath }) => {
+    const option = {
+      properties: ["openDirectory"],
+      defaultPath: localFilePath,
+    }
+
+    // 调用 Electron 原生对话框让用户选择目录
+    let result = await dialog.showOpenDialog(option);
+
+    // 如果用户取消了选择，则直接返回
+    if (result.canceled) {
+      return;
+    }
+
+    // 返回选中的第一个路径，并将路径中的正斜杠替换为反斜杠（通常用于 Windows 系统适配）
+    return result.filePaths[0].replaceAll("/", "\\");
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -162,4 +189,7 @@ export {
   onStartRecoding,
   onStopRecording,
   onOpenLocalFile,
+  onSaveSysSetting,
+  onGetSysSetting,
+  onChangeLocalFolder,
 };

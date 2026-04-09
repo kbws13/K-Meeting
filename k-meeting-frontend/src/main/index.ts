@@ -9,7 +9,11 @@ import {
   onLoginSuccess,
   onGetScreenSource,
   onStartRecoding,
-  onStopRecording, onOpenLocalFile
+  onStopRecording,
+  onOpenLocalFile,
+  onSaveSysSetting,
+  onGetSysSetting,
+  onChangeLocalFolder
 } from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
 
@@ -94,6 +98,12 @@ onStartRecoding();
 onStopRecording();
 
 onOpenLocalFile();
+
+onSaveSysSetting();
+
+onGetSysSetting();
+
+onChangeLocalFolder();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
