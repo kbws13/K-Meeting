@@ -19,6 +19,7 @@ import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.UserService;
+import xyz.kbws.websocket.ChannelContextUtil;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
@@ -41,6 +42,9 @@ public class UserController {
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private ChannelContextUtil channelContextUtil;
 
     @ApiOperation("获取验证码")
     @GetMapping("/checkCode")
@@ -95,5 +99,17 @@ public class UserController {
         user.setId(loginUser.getUserId());
         UserVO userVO = userService.updateUserInfo(avatar, user);
         return ResultUtil.success(userVO);
+    }
+
+    @ApiOperation("登出")
+    @PostMapping("/logout")
+    public BaseResponse<Boolean> logout(@CurrentUser LoginUser loginUser) {
+        if (loginUser != null) {
+            // 1. 清除Redis中的登录凭证
+            redisComponent.cleanTokenByUserId(loginUser.getUserId());
+            // 2. 将此用户关联的WebSocket连接强制断开并清理上下文
+            channelContextUtil.closeContext(loginUser.getUserId());
+        }
+        return ResultUtil.success(true);
     }
 }
