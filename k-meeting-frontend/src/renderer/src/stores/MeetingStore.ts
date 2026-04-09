@@ -6,6 +6,10 @@ import { defineStore } from "pinia";
 interface MeetingState {
   lastUpdate: number | null; // 上次更新的时间戳
   inMeeting: boolean;        // 是否正在会议中
+  noReadChatCount: number,
+  chatOpen: boolean,
+  allMemberList: any[],
+  memberList: any[],
 }
 
 export const useMeetingStore = defineStore('meetingInfo', {
@@ -13,6 +17,10 @@ export const useMeetingStore = defineStore('meetingInfo', {
     return {
       lastUpdate: null,
       inMeeting: false,
+      noReadChatCount: 0,
+      chatOpen: false,
+      allMemberList: [],
+      memberList: [],
     };
   },
 
@@ -26,6 +34,24 @@ export const useMeetingStore = defineStore('meetingInfo', {
       this.lastUpdate = new Date().getTime();
       // 更新会议状态（修正原图中的拼写 imMeeting 为 inMeeting）
       this.inMeeting = inMeeting;
+    },
+    addNoReadChatCount() {
+      if (this.chatOpen) {
+        return
+      }
+      this.noReadChatCount++
+    },
+    updateChatOpen(open) {
+      if (open) {
+        this.noReadChatCount = 0
+      }
+      this.chatOpen = open
+    },
+    setMemberList(memberList) {
+      this.memberList = memberList
+    },
+    setAllMemberList(allMemberList) {
+      this.allMemberList = allMemberList
     }
   }
 });
