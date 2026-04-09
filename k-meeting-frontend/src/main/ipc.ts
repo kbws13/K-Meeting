@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell, dialog } from 'electron'
 import { getWindow } from "./windowProxy";
-import { initWs } from './wsClient'
+import { initWs, logout } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
 
@@ -181,6 +181,12 @@ const onChangeLocalFolder = () => {
   })
 }
 
+const onLogout = () => {
+  ipcMain.handle("logout", () => {
+    logout()
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -192,4 +198,5 @@ export {
   onSaveSysSetting,
   onGetSysSetting,
   onChangeLocalFolder,
+  onLogout,
 };

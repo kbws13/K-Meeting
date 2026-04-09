@@ -7,8 +7,8 @@ const Api = {
   checkCode: "/user/checkCode", // 验证码
   login: "/user/login", // 登录
   register: "/user/register", // 注册
-  logout: "/account/logout", // 退出
-  updatePassword: "/account/updatePassword", // 修改密码
+  logout: "/user/logout", // 退出
+  updatePassword: "/user/changePassword", // 修改密码
   getSysSetting: "/account/getSysSetting", // 获取系统设置
   updateUserInfo: "/account/updateUserInfo", // 更新用户信息
 

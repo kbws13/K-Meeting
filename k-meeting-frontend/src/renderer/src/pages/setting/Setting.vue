@@ -49,9 +49,14 @@
       </div>
     </div>
   </div>
+  <UpdatePassword ref="updatePasswordRef"></UpdatePassword>
+
+  <AppUpdate :autoUpdate="false" ref="appUpdateRef"></AppUpdate>
 </template>
 
 <script setup lang="ts">
+import UpdatePassword from './UpdatePassword.vue'
+import AppUpdate from '../AppUpdate.vue'
 import { getCurrentInstance, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -88,6 +93,36 @@ const openLocalFolder = () => {
     localFilePath: formData.value.screencapFolder,
     folder: true
   })
+}
+
+const updatePasswordRef = ref()
+const updatePassword = () => {
+  updatePasswordRef.value.show()
+}
+
+const logout = () => {
+  proxy.Confirm({
+    message: '确定要退出吗?',
+    okfun: async () => {
+      // 1. 发起后端登出请求，清理服务器 Session/Token
+      let result = await proxy.Request({
+        url: proxy.Api.logout
+      })
+
+      if (!result) {
+        return
+      }
+
+      // 2. 通知 Electron 主进程处理退出逻辑（如清理本地缓存、关闭窗口等）
+      await window.electron.ipcRenderer.invoke('logout')
+      router.push("/")
+    }
+  })
+}
+
+const appUpdateRef = ref()
+const checkUpdate = () => {
+  appUpdateRef.value.checkUpdate()
 }
 </script>
 
