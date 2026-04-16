@@ -123,8 +123,8 @@ public class RedisComponent {
         if (userIdList.isEmpty()) {
             return;
         }
-        redisUtils.hdel(RedisConstant.MEETING_ROOM + meetingId, userIdList.toArray(new String[userIdList.size()]));
-    }
+        String[] array = userIdList.stream().map(String::valueOf).toArray(String[]::new);
+        redisUtils.hdel(RedisConstant.MEETING_ROOM + meetingId, array);    }
 
     public void addInviteInfo(Integer meetingId, Integer userId) {
         redisUtils.setEx(RedisConstant.INVITE_MEMBER + userId + meetingId, meetingId, RedisConstant.ONE_MIN * 5L);

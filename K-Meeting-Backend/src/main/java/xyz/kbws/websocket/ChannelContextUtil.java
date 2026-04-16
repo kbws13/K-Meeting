@@ -136,7 +136,7 @@ public class ChannelContextUtil {
         if (MessageTypeEnum.FINISH_MEETING.getValue().equals(messageSendDto.getMessageType())) {
             List<MeetingMemberObj> meetingMemberObjList = redisComponent.getMeetingMemberList(messageSendDto.getMeetingId());
             for (MeetingMemberObj meetingMemberObj : meetingMemberObjList) {
-                removeContextFromGroup(meetingMemberObj.getUserId(), messageSendDto.getMessageId());
+                removeContextFromGroup(meetingMemberObj.getUserId(), messageSendDto.getMeetingId());
             }
             removeContextGroup(messageSendDto.getMeetingId());
         }
