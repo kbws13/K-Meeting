@@ -22,7 +22,6 @@ import xyz.kbws.model.obj.MeetingJoinObj;
 import xyz.kbws.model.obj.MeetingMemberObj;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.entity.LoginUser;
-import xyz.kbws.utils.UserIdCodec;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -161,10 +160,12 @@ public class ChannelContextUtil {
     private String buildWsMessageJson(MessageSendDto<?> messageSendDto) {
         JSONObject payload = (JSONObject) JSON.toJSON(messageSendDto);
         if (messageSendDto.getSendUserId() != null) {
-            payload.put("sendUserId", UserIdCodec.encode(messageSendDto.getSendUserId()));
+            // TODO 暂时停止混淆
+            payload.put("sendUserId", messageSendDto.getSendUserId());
         }
         if (messageSendDto.getReceiveUserId() != null) {
-            payload.put("receiveUserId", UserIdCodec.encode(messageSendDto.getReceiveUserId()));
+            // TODO 暂时停止混淆
+            payload.put("receiveUserId", messageSendDto.getReceiveUserId());
         }
 
         Object messageContent = messageSendDto.getMessageContent();
@@ -194,7 +195,8 @@ public class ChannelContextUtil {
     private JSONObject buildMeetingExitPayload(MeetingExitObj meetingExitObj) {
         JSONObject payload = new JSONObject();
         if (meetingExitObj.getExitUserId() != null) {
-            payload.put("exitUserId", UserIdCodec.encode(meetingExitObj.getExitUserId()));
+            // TODO 暂时停止混淆
+            payload.put("exitUserId", meetingExitObj.getExitUserId());
         }
         payload.put("exitStatus", meetingExitObj.getExitStatus());
         List<JSONObject> memberList = new ArrayList<>();
@@ -213,7 +215,8 @@ public class ChannelContextUtil {
         }
         JSONObject payload = (JSONObject) JSON.toJSON(meetingMemberObj);
         if (meetingMemberObj.getUserId() != null) {
-            payload.put("userId", UserIdCodec.encode(meetingMemberObj.getUserId()));
+            // TODO 暂时停止混淆
+            payload.put("userId", meetingMemberObj.getUserId());
         }
         return payload;
     }

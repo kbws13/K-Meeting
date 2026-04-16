@@ -98,8 +98,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         UserVO userVO = new UserVO();
         BeanUtil.copyProperties(user, userVO);
+        // 这里暂时移除加密方便测试
         String secretUserId = UserIdCodec.encode(user.getId());
         userVO.setId(secretUserId);
+        userVO.setUserId(user.getId());
         userVO.setToken(JwtUtil.createToken(secretUserId));
         LoginUser loginUser = new LoginUser();
         BeanUtil.copyProperties(userVO, loginUser);

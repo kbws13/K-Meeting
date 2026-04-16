@@ -14,6 +14,8 @@ public class UserVO implements Serializable {
 
     private String id;
 
+    private Integer UserId;
+
     /**
      * 邮箱
      */

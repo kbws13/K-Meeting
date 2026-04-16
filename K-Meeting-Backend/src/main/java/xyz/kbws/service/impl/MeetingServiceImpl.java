@@ -4,9 +4,7 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.aop.framework.AopContext;
@@ -123,12 +121,12 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     }
 
     @Override
-    public Integer preJoinMeeting(Integer meetingId, LoginUser loginUser, String password) {
-        QueryWrapper<Meeting> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("id", meetingId)
-                .eq("status", MeetingStatusEnum.PENDING.getValue())
-                .orderByDesc("createTime");
-        List<Meeting> meetingList = this.list(queryWrapper);
+    public Integer preJoinMeeting(Integer meetingNo, LoginUser loginUser, String password) {
+        LambdaQueryWrapper<Meeting> qw = new LambdaQueryWrapper<>();
+        qw.eq(Meeting::getMeetingNo, meetingNo)
+                .eq(Meeting::getStatus, MeetingStatusEnum.PENDING.getValue())
+                .orderByDesc(Meeting::getCreateTime);
+        List<Meeting> meetingList = this.list(qw);
         if (meetingList.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "会议不存在");
         }
@@ -140,14 +138,14 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         if ((currentMeetingId != null && currentMeetingId != 0) && !meeting.getId().equals(currentMeetingId)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "你有未结束的会议无法加入其他会议");
         }
-        this.checkMeetingJoin(meetingId, loginUser.getUserId());
+        this.checkMeetingJoin(meeting.getId(), loginUser.getUserId());
 
         if (MeetingJoinTypeEnum.PASSWORD.getValue().equals(meeting.getJoinType()) && !meeting.getJoinPassword().equals(password)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "入会密码错误");
         }
-        loginUser.setCurrentMeetingId(meetingId);
+        loginUser.setCurrentMeetingId(meeting.getId());
         redisComponent.resetUserVO(loginUser);
-        return meetingId;
+        return meeting.getId();
     }
 
     @Override
@@ -242,7 +240,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
     @Override
     public void reserveJoinMeeting(Integer meetingId, LoginUser loginUser, String joinPassword) {
         Integer userId = loginUser.getUserId();
-        if (userId == null || !meetingId.equals(loginUser.getCurrentMeetingId())) {
+        if (loginUser.getCurrentMeetingId() != null && !meetingId.equals(loginUser.getCurrentMeetingId())) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "有未结束的会议");
         }
         checkMeetingJoin(meetingId, userId);

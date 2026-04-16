@@ -65,7 +65,7 @@ public class NettyWebSocketStarter implements Runnable {
                             pipeline.addLast(new HandlerHeartBeat());
                             // token 校验
                             pipeline.addLast(handlerTokenValidation);
-                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws", null, true, 6553, true, true, 10000L));
+                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws", null, true, 65535, true, true, 10000L));
                             pipeline.addLast(handlerWebSocket);
                         }
                     });

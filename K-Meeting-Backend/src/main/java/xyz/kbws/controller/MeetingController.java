@@ -109,8 +109,7 @@ public class MeetingController {
     @ApiOperation("预加入会议")
     @PostMapping("/preJoin")
     public BaseResponse<Integer> preJoin(@RequestBody PreJoinDto preJoinDto, @CurrentUser LoginUser loginUser) {
-        loginUser.setCurrentMeetingId(preJoinDto.getMeetingId());
-        Integer meetingId = meetingService.preJoinMeeting(preJoinDto.getMeetingId(), loginUser, preJoinDto.getPassword());
+        Integer meetingId = meetingService.preJoinMeeting(preJoinDto.getMeetingNo(), loginUser, preJoinDto.getPassword());
         return ResultUtil.success(meetingId);
     }
 

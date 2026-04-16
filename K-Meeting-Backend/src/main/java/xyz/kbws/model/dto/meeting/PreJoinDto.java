@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Data
 public class PreJoinDto implements Serializable {
 
-    private Integer meetingId;
+    private Integer meetingNo;
 
     private String nickName;
 
