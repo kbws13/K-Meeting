@@ -585,8 +585,7 @@ const onUserLeave = (messageContent) => {
     emit('exitMeeting')
     return
   }
-  console.log("所有用户：", memberList.value)
-  console.log("要被过滤的用户：", exitUserId)
+
   memberList.value = memberList.value.filter((item) => item.userId !== exitUserId)
   meetingStore.setAllMemberList(meetingMemberList)
   meetingStore.setMemberList(memberList.value)
@@ -632,6 +631,15 @@ const cameraSwitchHandler = async (open) => {
     })
     localVideoRef.value.srcObject = cameraStream
   }
+  if (currentSelectUserId.value == userInfoStore.userInfo.userId) {
+    emit('selectMember', {
+      srcObject: localVideoRef.value.srcObject,
+      userId: userInfoStore.userInfo.userId,
+      nickname: userInfoStore.userInfo.nickName,
+      sex: userInfoStore.userInfo.sex,
+      openVideo: open
+    })
+  }
 }
 
 const sendOpenVideoChangeMessage = async (openVideo) => {
@@ -659,12 +667,71 @@ const memberVideoChange = (sendUserId, openVideo) => {
       srcObject: document.querySelector('#meber_' + member.userId).srcObject,
       userId: member.userId,
       nickname: member.nickName,
+      sex: member.sex,
       openVideo
     })
   }
 }
 
+/**
+ * 屏幕共享状态变更处理函数
+ * @param {string} _screenId 选中的屏幕源 ID，为空则表示停止共享
+ */
+const shareScreenHandler = async (_screenId) => {
+  // 1. 发送视频状态变更信令，通知其他成员本地视频状态的变化
+  sendOpenVideoChangeMessage(
+    (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
+    !proxy.Utils.isEmpty(_screenId)
+  )
+
+  const oldScreenId = screenId.value
+  screenId.value = _screenId
+
+  // 2. 媒体流切换逻辑
+  if (!proxy.Utils.isEmpty(_screenId) && (!screenStream || oldScreenId !== _screenId)) {
+    // 开启共享：初始化屏幕流并设置为当前本地流
+    await initLocalScreenStream()
+    localStream = screenStream
+  } else if (proxy.Utils.isEmpty(_screenId) && props.deviceInfo.cameraOpen) {
+    // 停止共享：切回摄像头流
+    localStream = cameraStream
+  }
+
+  // 3. 更新本地预览画面
+  localVideoRef.value.srcObject = localStream
+  const videoTrack = localStream ? localStream.getVideoTracks()[0] : null
+
+  // 4. 核心：遍历所有远程连接，实时替换 WebRTC 视频轨道
+  memberList.value.forEach(async (member) => {
+    const peerConnection = peerConnectionMap.get(member.userId)
+    peerConnection.getSenders().forEach((sender) => {
+      if (sender.track && sender.track.kind == 'video') {
+        if (videoTrack) {
+          // 使用 WebRTC 的 replaceTrack 无缝替换轨道，无需重新协商（SDP）
+          sender.replaceTrack(videoTrack)
+        } else {
+          sender.track.enabled = false
+        }
+      }
+    })
+  })
+
+  // 5. 如果当前正在全屏/重点看自己，触发 UI 更新
+  if (currentSelectUserId.value == userInfoStore.userInfo.userId) {
+    emit('selectMember', {
+      srcObject: localStream,
+      userId: userInfoStore.userInfo.userId,
+      nickName: userInfoStore.userInfo.nickName,
+      sex: userInfoStore.userInfo.sex,
+      openVideo:
+        (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
+        !proxy.Utils.isEmpty(_screenId)
+    })
+  }
+}
+
 onMounted(() => {
+  mitter.on('shareScreen', shareScreenHandler)
   mitter.on('micSwitch', micSwitchHandler)
   mitter.on('cameraSwitch', cameraSwitchHandler)
   initMeetingListener()
@@ -672,6 +739,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  mitter.off('shareScreen', shareScreenHandler)
   mitter.off('micSwitch', micSwitchHandler)
   mitter.off('cameraSwitch', cameraSwitchHandler)
 })

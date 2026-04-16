@@ -62,16 +62,18 @@
       </div>
     </div>
   </div>
+  <SelectScreen ref="selectScreenRef"></SelectScreen>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import MicIcon from '../../../components/MicIcon.vue'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useRoute } from 'vue-router'
 import { mitter } from '../../../eventbus/eventBus'
 const meetingStore = useMeetingStore()
 const route = useRoute()
+import SelectScreen from './SelectScreen.vue'
 
 const props = defineProps({
   deviceInfo: {
@@ -110,6 +112,41 @@ const cameraClickHandler = () => {
   // 4. 通过全局事件总线（mitt）发送状态变更通知，供主页面或后台逻辑处理音频流
   mitter.emit('cameraSwitch', props.deviceInfo.cameraOpen)
 }
+
+// 共享/取消共享
+
+const selectScreenRef = ref()
+
+/**
+ * 屏幕共享按钮点击处理器
+ */
+const shareScreenClickHandler = () => {
+  if (shareScreen.value) {
+    // 如果当前正在共享，则触发停止共享逻辑
+    mitter.emit('shareScreen', '')
+    shareScreen.value = false
+    return
+  }
+  // 如果未共享，则调起屏幕选择弹窗
+  selectScreenRef.value.show()
+}
+
+/**
+ * 屏幕共享启动后的回调处理器
+ */
+const shareScreenHandler = () => {
+  shareScreen.value = true
+}
+
+// 生命周期：组件挂载时监听共享事件
+onMounted(() => {
+  mitter.on('shareScreen', shareScreenHandler)
+})
+
+// 生命周期：组件卸载时移除监听，防止内存泄漏
+onUnmounted(() => {
+  mitter.off('shareScreen', shareScreenHandler)
+})
 
 const buttons = ref([
   {
