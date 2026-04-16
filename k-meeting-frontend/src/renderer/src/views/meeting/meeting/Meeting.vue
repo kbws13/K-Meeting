@@ -14,7 +14,7 @@
     <template v-if="inited">
       <div class="meeting-panel">
         <div :class="['layout', LAYOUT_CLASS[layoutType]]">
-          <MemberList></MemberList>
+          <MemberList :deviceInfo="deviceInfo"></MemberList>
           <div v-show="layoutType != 0"></div>
         </div>
       </div>
@@ -27,11 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import MemberList from './MemberList.vue'
 import Header from './Header.vue'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { mitter } from '../../../eventbus/eventBus'
 import Footer from './Footer.vue'
+import MemberList from './MemberList.vue'
 
 const inited = ref(false)
 const deviceInfo = reactive({
