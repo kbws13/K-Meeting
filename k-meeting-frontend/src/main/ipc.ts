@@ -248,7 +248,7 @@ const openWindow = ({ windowId, title = "详情", path, width = 960, height = 72
     })
 
     newwindow.on("closed", () => {
-      closewindow();
+      closewindow(windowId);
       delWindow(windowId);
     })
 
@@ -273,7 +273,7 @@ const openWindow = ({ windowId, title = "详情", path, width = 960, height = 72
   }
 }
 
-const closewindow = () => {
+const closewindow = (windowId) => {
   const mainwindow = getWindow("main");
   if (mainwindow) {
     mainwindow.webContents.send("closeWindow", { windowId });

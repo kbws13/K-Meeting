@@ -105,11 +105,10 @@ const cameraClickHandler = () => {
   if (!props.deviceInfo.cameraEnable) {
     return
   }
-  micInfoRef.value.toggleMic()
   props.deviceInfo.cameraOpen = !props.deviceInfo.cameraOpen
 
   // 4. 通过全局事件总线（mitt）发送状态变更通知，供主页面或后台逻辑处理音频流
-  mitter.emit('micSwitch', props.deviceInfo.cameraOpen)
+  mitter.emit('cameraSwitch', props.deviceInfo.cameraOpen)
 }
 
 const buttons = ref([

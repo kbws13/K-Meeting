@@ -14,7 +14,7 @@
     <template v-if="inited">
       <div class="meeting-panel">
         <div :class="['layout', LAYOUT_CLASS[layoutType]]">
-          <MemberList :deviceInfo="deviceInfo"></MemberList>
+          <MemberList :deviceInfo="deviceInfo" @exitMeeting="forceExit"></MemberList>
           <div v-show="layoutType != 0"></div>
         </div>
       </div>
@@ -28,10 +28,12 @@
 
 <script setup lang="ts">
 import Header from './Header.vue'
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { mitter } from '../../../eventbus/eventBus'
 import Footer from './Footer.vue'
 import MemberList from './MemberList.vue'
+
+const { proxy } = getCurrentInstance()
 
 const inited = ref(false)
 const deviceInfo = reactive({
@@ -83,12 +85,32 @@ const layoutChangeHandler = (type: number) => {
   layoutType.value = type
 }
 
+const titlebarRef = ref()
+const closeMeeting = () => {
+  proxy.Confirm({
+    message: "确定要退出会议吗？",
+    okfun:() => {
+      titlebarRef.value.custClose()
+    }
+  })
+}
+
+const forceExit = () => {
+  titlebarRef.value.custClose()
+}
+
 onMounted(() => {
   mitter.on("layoutChange", layoutChangeHandler)
+
+  window.electron.ipcRenderer.on("preCloseWindow", () => {
+    closeMeeting()
+  })
 })
 
 onUnmounted(() => {
   mitter.off("layoutChange", layoutChangeHandler)
+
+  window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
 </script>
 

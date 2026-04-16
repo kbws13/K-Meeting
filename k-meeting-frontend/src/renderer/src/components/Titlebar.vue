@@ -66,7 +66,7 @@ const winOp = (action, data) => {
 const close = () => {
   winOp('close', { closeType: props.closeType, forceClose: props.forceClose })
 }
-const custclose = () => {
+const custClose = () => {
   winOp('close', { closeType: props.closeType, forceClose: true })
 }
 const minimize = () => {
@@ -88,7 +88,7 @@ onMounted(() => {
 })
 
 defineExpose({
-  custclose
+  custClose
 })
 </script>
 

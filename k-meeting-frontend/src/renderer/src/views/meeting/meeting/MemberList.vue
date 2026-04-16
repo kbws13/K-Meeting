@@ -71,10 +71,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue'
+import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useMeetingStore } from '@/stores/MeetingStore'
+import { mitter } from '@/eventbus/eventBus.ts'
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
@@ -562,14 +563,117 @@ const initMeetingListener = () => {
         case 2: // 建立 peerConnection (WebRTC 信号交换)
           onPeerConnection({ sendUserId, receiveUserId, messageContent })
           break
+        case 3:
+          onUserLeave(messageContent)
+          break
+        case 4:
+          meetingFinish(messageContent)
+          break
+        case 11:
+          memberVideoChange(sendUserId, messageContent)
+          break
       }
     }
   )
 }
 
+const emit = defineEmits(['exitMeeting', 'selectMember'])
+const onUserLeave = (messageContent) => {
+  console.log('收到退出消息内容：', messageContent)
+  const { exitUserId, meetingMemberObjList: meetingMemberList, exitStatus } = messageContent
+  if (userInfoStore.userInfo.userId === exitUserId) {
+    emit('exitMeeting')
+    return
+  }
+  console.log("所有用户：", memberList.value)
+  console.log("要被过滤的用户：", exitUserId)
+  memberList.value = memberList.value.filter((item) => item.userId !== exitUserId)
+  meetingStore.setAllMemberList(meetingMemberList)
+  meetingStore.setMemberList(memberList.value)
+  peerConnectionMap.delete(exitUserId)
+}
+
+const meetingFinish = () => {
+  emit('exitMeeting')
+}
+
+const micSwitchHandler = async (open) => {
+  if (localStream) {
+    localStream.getAudioTracks().forEach((track) => (track.enabled = open))
+  }
+  memberList.value.forEach((member) => {
+    const pc = peerConnectionMap.get(member.userId)
+    const sender = pc.getSenders().find((sender) => {
+      return sender.track && sender.track.kind === 'audio'
+    })
+    sender.track.enabled = open
+  })
+}
+
+const cameraSwitchHandler = async (open) => {
+  if (cameraStream) {
+    cameraStream.getVideoTracks().forEach((track) => (track.enabled = open))
+  }
+  if (screenId.value) {
+    return
+  }
+  sendOpenVideoChangeMessage(open)
+  //TODO 发送消息告诉其他用户，我已经关闭摄像头
+  if (!screenId.value && open) {
+    const videoTrack = cameraStream.getVideoTracks()[0]
+    videoTrack.enabled = true
+    memberList.value.forEach((member) => {
+      const peerConnection = peerConnectionMap.get(member.userId)
+      peerConnection.getSenders().forEach((sender) => {
+        if (sender.track && sender.track.kind === 'video') {
+          sender.replaceTrack(videoTrack)
+        }
+      })
+    })
+    localVideoRef.value.srcObject = cameraStream
+  }
+}
+
+const sendOpenVideoChangeMessage = async (openVideo) => {
+  let result = await proxy.Request({
+    url: proxy.Api.sendOpenVideoChangeMessage,
+    params: {
+      openVideo
+    }
+  })
+  if (!result) {
+    return
+  }
+}
+
+const memberVideoChange = (sendUserId, openVideo) => {
+  if (sendUserId === userInfoStore.userInfo.userId) {
+    return
+  }
+  const member = memberList.value.find((item) => {
+    return item.userId === sendUserId
+  })
+  member.openVideo = openVideo
+  if (currentSelectUserId.value == member.userId) {
+    emit('selectMember', {
+      srcObject: document.querySelector('#meber_' + member.userId).srcObject,
+      userId: member.userId,
+      nickname: member.nickName,
+      openVideo
+    })
+  }
+}
+
 onMounted(() => {
+  mitter.on('micSwitch', micSwitchHandler)
+  mitter.on('cameraSwitch', cameraSwitchHandler)
   initMeetingListener()
   initLocalStream()
+})
+
+onUnmounted(() => {
+  mitter.off('micSwitch', micSwitchHandler)
+  mitter.off('cameraSwitch', cameraSwitchHandler)
 })
 </script>
 
