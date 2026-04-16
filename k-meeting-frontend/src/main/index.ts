@@ -15,7 +15,7 @@ import {
   onGetSysSetting,
   onChangeLocalFolder,
   onLogout,
-  onOpenWindow,
+  onOpenWindow, onSendPeerConnection
 } from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
 
@@ -110,6 +110,8 @@ onChangeLocalFolder();
 onLogout();
 
 onOpenWindow();
+
+onSendPeerConnection()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

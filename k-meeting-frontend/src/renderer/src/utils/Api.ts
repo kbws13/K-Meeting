@@ -32,7 +32,7 @@ const Api = {
   loadMeetingMembers: "/meeting/loadMeetingMembers", // 会议成员
   getCurrentMeeting: "/meeting/getCurrentMeeting", // 获取会议信息
   delMeetingRecord: "/meeting/delMeetingRecord", // 删除会议记录
-  reserveJoinMeeting: "/meeting/reserveJoinMeeting", // 预约加入会议
+  reserveJoinMeeting: "/meeting/reserveJoin", // 预约加入会议
   sendOpenVideoChangeMessage: "/meeting/sendOpenVideoChangeMessage", // 用户开启关闭摄像头
 
   // --- 聊天与消息 ---

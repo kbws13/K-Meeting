@@ -8,8 +8,7 @@
         LAYOUT_MAP[layoutType]
       ]"
     >
-      <div
-        class="video-panel"
+      <div class="video-panel"
         v-show="
           (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
           !proxy.Utils.isEmpty(screenId)
@@ -45,15 +44,40 @@
         </div>
       </div>
     </div>
+    <div
+      :class="[
+        'member-item',
+        currentSelectUserId == item.userId ? 'active' : '',
+        LAYOUT_MAP[layoutType]
+      ]"
+      v-for="(item, index) in memberList"
+    >
+      <div class="video-panel" v-show="item.openVideo">
+        <video :id="`member_${item.userId}`" autoplay playsinline loop></video>
+        <div class="video-user-name">
+          <div :class="['iconfont', proxy.Utils.getSexIcon(item.sex)]"></div>
+          <div class="user-name">{{ item.nickName }}</div>
+        </div>
+      </div>
+
+      <div class="user-info" v-show="!item.openVideo">
+        <Avatar :avatar="item.userId" :udpate="true"></Avatar>
+        <div :class="['user-name', 'iconfont', proxy.Utils.getSexIcon(item.sex)]">
+          {{ item.nickName }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUserInfoStore } from '../../../stores/UserInfoStore'
+import { useUserInfoStore } from '@/stores/UserInfoStore'
+import { useMeetingStore } from '@/stores/MeetingStore'
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const meetingStore = useMeetingStore()
 const { proxy } = getCurrentInstance()
 
 const props = defineProps({
@@ -88,7 +112,7 @@ const gridStyle = computed(() => {
   }
 
   // 2. 根据当前参会者列表的长度计算行列数
-  const { rows, cols } = calculateGrid(memberList.value.length)
+  const { rows, cols } = calculateGrid(memberList.value.length + 1)
 
   // 3. 返回 CSS Grid 布局样式对象
   return {
@@ -169,7 +193,7 @@ const initLocalStream = async () => {
   // 获取硬件媒体流
   if (props.deviceInfo.cameraEnable || proxy.deviceInfo.micEnable) {
     await initLocalCameraStream(proxy.deviceInfo.cameraEnable, props.deviceInfo.micEnable)
-    cameraStream.getTracks().forEach((tarck) => { // ⚠️ 原图变量名: tarck
+    cameraStream.getTracks().forEach((tarck) => {
       tarck.enabled = false
       localStream.addTrack(tarck)
     })
@@ -192,7 +216,6 @@ const initLocalStream = async () => {
     await initLocalScreenStream()
     localStream.addTrack(screenStream.getVideoTracks()[0])
   } else if (!screenId.value && (props.deviceInfo.cameraEnable || props.deviceInfo.micEnable)) {
-    // ⚠️ 原图此处逻辑有误：getAudioTracks 会导致无法获取视频轨
     localStream.getTracks().forEach((track) => {
       if (track.kind == 'audio') {
         track.enabled = props.deviceInfo.micOpen
@@ -209,7 +232,11 @@ const initLocalStream = async () => {
 
   // 绑定预览
   localVideoRef.value.srcObject = localStream
-  // // 加入会议
+  // 加入会议
+  joinMeeting(
+    (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
+    !proxy.Utils.isEmpty(screenId.value)
+  )
 }
 
 // --- 媒体流初始化函数 ---
@@ -254,19 +281,294 @@ const initLocalScreenStream = async () => {
         maxFrameRate: 25
       }
     }
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: constraints
-    }).catch(error => {
-      console.error(error)
-    })
+    const stream = await navigator.mediaDevices
+      .getUserMedia({
+        audio: false,
+        video: constraints
+      })
+      .catch((error) => {
+        console.error(error)
+      })
     screenStream = stream;
     resolve(stream)
     return;
   })
 }
 
+/**
+ * 加入会议请求
+ */
+const joinMeeting = async (videoOpen) => {
+  let result = await proxy.Request({
+    url: proxy.Api.joinMeeting,
+    params: {
+      videoOpen
+    },
+    dataType: 'json',
+    showLoading: false
+  })
+  if (!result) {
+    return
+  }
+}
+
+const peerConnectionMap = new Map()
+const SIGNAL_TYPE_OFFER = 'offer'
+const SIGNAL_TYPE_ANSWER = 'answer'
+const SIGNAL_TYPE_CANDIDATE = 'candidate'
+
+/**
+ * 为指定成员创建 RTCPeerConnection 实例
+ * @param {Object} member 会议成员对象
+ */
+const createPeerConnection = (member) => {
+  let peerConnection = peerConnectionMap.get(member.userId)
+  if (peerConnection) {
+    return peerConnection
+  }
+
+  // 初始化 RTCPeerConnection 配置
+  peerConnection = new RTCPeerConnection({
+    sdpSemantics: 'unified-plan', // 明确使用现代标准
+    codecs: { video: 'VP8' },      // 强制优先使用 VP8
+    bundlePolicy: 'balanced',      // 优化媒体传输通道的绑定策略
+    rtcpMuxPolicy: 'require',      // 强制 RTP/RTCP 多路复用
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  })
+
+  // 增加候选信息缓冲队列，避免远端描述设置前就收到候选信息导致丢失
+  peerConnection.candidateQueue = []
+
+  // 1. 处理收发器（Transceiver）
+  // 如果本地摄像头不可用，预先添加一个“只收不发”的视频收发器，用于接收对方画面
+  if (!props.deviceInfo.cameraEnable) {
+    peerConnection.addTransceiver('video', { direction: 'recvonly' })
+  }
+
+  // 如果本地麦克风不可用，预先添加一个“只收不发”的音频收发器
+  if (!props.deviceInfo.micEnable) {
+    peerConnection.addTransceiver('audio', { direction: 'recvonly' })
+  }
+
+  // Debug：监听链接状态
+  peerConnection.onconnectionstatechange = () => {
+    console.log(`[WebRTC - ${member.userId}] Connection State 改变: ${peerConnection.connectionState}`);
+  }
+
+  peerConnection.oniceconnectionstatechange = () => {
+    console.log(`[WebRTC - ${member.userId}] ICE Connection State 改变: ${peerConnection.iceConnectionState}`);
+  }
+
+  // 2. 监听 ICE 候选者（Candidate）
+  peerConnection.onicecandidate = (e) => {
+    if (e.candidate) {
+      console.log(`[WebRTC - ${member.userId}] 发现本机 Candidate，准备发送`, e.candidate.candidate);
+      sendPeerMessage({
+        sendUserId: userInfoStore.userInfo.userId,
+        signalType: SIGNAL_TYPE_CANDIDATE,
+        signalData: e.candidate,
+        receiveUserId: member.userId
+      })
+    } else {
+      console.log(`[WebRTC - ${member.userId}] ICE 收集完成`);
+    }
+  }
+
+  // 3. 监听远程媒体轨道（Track）
+  peerConnection.ontrack = (event) => {
+    console.log(`[WebRTC - ${member.userId}] 收到远程流 Track`, event.track.kind);
+    nextTick(() => {
+      const remoteVideo = document.querySelector('#member_' + member.userId)
+      if (remoteVideo) {
+        console.log(`[WebRTC - ${member.userId}] 将收到的流挂载到 video DOM 上`);
+        remoteVideo.srcObject = event.streams[0]
+      } else {
+        console.error(`[WebRTC - ${member.userId}] 未能在页面中找到 ID 为 #member_${member.userId} 的 video 节点！`);
+      }
+    });
+  }
+
+  // 4. 将本地所有音视频轨道添加到连接中发送给对方
+  if (localStream) {
+    localStream.getTracks().forEach((track) => {
+      console.log(`[WebRTC - ${member.userId}] 将本地 Track 添加到对等连接中:`, track.kind);
+      peerConnection.addTrack(track, localStream)
+    })
+  } else {
+    console.warn(`[WebRTC - ${member.userId}] 本地流为空，无法分享音视频！`);
+  }
+
+  // 5. 缓存连接实例并返回
+  peerConnectionMap.set(member.userId, peerConnection)
+  return peerConnection
+}
+
+/**
+ * 处理新用户加入会议的逻辑
+ */
+const onUserJoin = async (messageContent) => {
+  console.log(messageContent)
+  const newMember = messageContent.newMember
+  // 1. 获取所有成员并按加入时间排序
+  const allMemberList = messageContent.meetingMemberList.sort((a, b) => a.joinTime - b.joinTime)
+
+  // 2. 过滤掉自己，并只保留状态为 1 (在线) 的成员
+  memberList.value = allMemberList.filter((item) => {
+    return item.userId !== userInfoStore.userInfo.userId && item.status == 1
+  })
+
+  // 3. 更新 Pinia/Vuex 仓库中的成员列表
+  meetingStore.setMemberList(memberList.value)
+  meetingStore.setAllMemberList(allMemberList)
+
+  await nextTick()
+
+  // 4. 如果加入的是别人，弹出成功提示并准备建立 WebRTC 连接
+  if (newMember.userId !== userInfoStore.userInfo.userId) {
+    proxy.Message.success(`用户${newMember.nickName}加入了会议`)
+    createPeerConnection(newMember)
+    return
+  }
+  memberList.value.forEach((member) => {
+    const peerConnection = createPeerConnection(member)
+    sendOffer(peerConnection, userInfoStore.userInfo.userId, member.userId)
+  })
+}
+
+/**
+ * 发送 Offer (通常由呼叫方触发)
+ */
+const sendOffer = async (peerConnection, sendUserId, receiveUserId) => {
+  // 创建 Offer，iceRestart: true 确保在网络切换时可以重新协商
+  let offer = await peerConnection.createOffer({ iceRestart: true })
+  await peerConnection.setLocalDescription(offer)
+
+  sendPeerMessage({
+    sendUserId,
+    receiveUserId,
+    signalType: SIGNAL_TYPE_OFFER,
+    signalData: offer
+  })
+}
+
+/**
+ * 通过 Electron IPC 发送 P2P 信令消息
+ */
+const sendPeerMessage = ({sendUserId, receiveUserId, signalType, signalData}) => {
+  window.electron.ipcRenderer.send('sendPeerConnection', {
+    sendUserId,
+    receiveUserId,
+    signalType,
+    // 将复杂的信令对象转为字符串传输，避免 IPC 序列化问题
+    signalData: JSON.stringify(signalData)
+  })
+}
+
+/**
+ * 处理接收到的远程 P2P 信令
+ */
+const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) => {
+  // 1. 安全校验：确保消息是发给自己的
+  if (receiveUserId != userInfoStore.userInfo.userId) {
+    return
+  }
+
+  // 2. 解析信令数据
+  const signalData = messageContent.signalData ? JSON.parse(messageContent.signalData) : {}
+
+  // 3. 查找对应的成员并获取/创建连接实例
+  const member = memberList.value.find((item) => {
+    return item.userId == sendUserId
+  })
+
+  if (!member) {
+    console.error(`[WebRTC] 找不到发送消息的用户: ${sendUserId}，忽略该信令。`);
+    return;
+  }
+
+  const peerConnection = createPeerConnection(member)
+
+  console.log(`[信令交互 - 收到 ${sendUserId}] 信令类型: ${messageContent.signalType}`);
+
+  try {
+    switch (messageContent.signalType) {
+      case SIGNAL_TYPE_OFFER: {
+        // 收到 Offer：设置远端描述 -> 创建应答 -> 设置本地描述 -> 发回 Answer
+        await peerConnection.setRemoteDescription(signalData)
+        const answer = await peerConnection.createAnswer()
+        await peerConnection.setLocalDescription(answer)
+
+        console.log(`[信令交互 - 收到 Offer] 发送给 ${sendUserId} 回复 Answer`);
+        sendPeerMessage({
+          sendUserId: receiveUserId,
+          receiveUserId: sendUserId,
+          signalType: SIGNAL_TYPE_ANSWER,
+          signalData: answer
+        })
+
+        // 执行在 offer 之前被压入队列的 candidate
+        if (peerConnection.candidateQueue && peerConnection.candidateQueue.length > 0) {
+          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`);
+          for (const c of peerConnection.candidateQueue) {
+            await peerConnection.addIceCandidate(c).catch(e => console.error(e));
+          }
+          peerConnection.candidateQueue = [];
+        }
+        break
+      }
+
+      case SIGNAL_TYPE_ANSWER: {
+        // 收到 Answer：设置远端描述，完成 SDP 握手
+        await peerConnection.setRemoteDescription(signalData)
+
+        // 同样执行候选者队列
+        if (peerConnection.candidateQueue && peerConnection.candidateQueue.length > 0) {
+          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`);
+          for (const c of peerConnection.candidateQueue) {
+            await peerConnection.addIceCandidate(c).catch(e => console.error(e));
+          }
+          peerConnection.candidateQueue = [];
+        }
+        break
+      }
+
+      case SIGNAL_TYPE_CANDIDATE: {
+        // 收到 Candidate：必须在 setRemoteDescription 之后才能添加
+        if (!peerConnection.remoteDescription) {
+          console.log(`[信令交互 - ${sendUserId}] 未收到 Offer，先将 Candidate 放入队列`);
+          peerConnection.candidateQueue.push(signalData);
+          return
+        }
+        await peerConnection.addIceCandidate(signalData).catch(e => console.error(e));
+        break
+      }
+    }
+  } catch (error) {
+    console.error('[WebRTC ERROR]', error)
+  }
+}
+
+/**
+ * 初始化会议消息监听（Electron IPC）
+ */
+const initMeetingListener = () => {
+  window.electron.ipcRenderer.on(
+    'meetingMessage',
+    (e, { sendUserId, receiveUserId, messageContent, messageType }) => {
+      switch (messageType) {
+        case 1: // 用户加入
+          onUserJoin(messageContent)
+          break
+        case 2: // 建立 peerConnection (WebRTC 信号交换)
+          onPeerConnection({ sendUserId, receiveUserId, messageContent })
+          break
+      }
+    }
+  )
+}
+
 onMounted(() => {
+  initMeetingListener()
   initLocalStream()
 })
 </script>

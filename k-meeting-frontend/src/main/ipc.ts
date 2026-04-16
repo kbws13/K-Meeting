@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow, desktopCapturer, SourcesOptions, IpcMainInvokeEvent, shell, dialog } from 'electron'
 import { delWindow, getWindow, saveWindow } from './windowProxy'
-import { initWs, logout } from './wsClient'
+import { initWs, logout, sendWsData } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
 import { saveSysSetting, getSysSetting } from './sysSetting'
@@ -301,6 +301,13 @@ const onOpenWindow = () => {
   });
 }
 
+const onSendPeerConnection = () => {
+  ipcMain.on("sendPeerConnection", (e, peerData) => {
+    peerData.token = store.getData("userInfo")?.token
+    sendWsData(JSON.stringify(peerData))
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -314,4 +321,5 @@ export {
   onChangeLocalFolder,
   onLogout,
   onOpenWindow,
+  onSendPeerConnection,
 };

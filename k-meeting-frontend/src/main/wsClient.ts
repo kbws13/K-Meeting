@@ -70,6 +70,16 @@ const connectWs = (): void => {
     const meetingWin = getWindow("meeting");
     const mainWin = getWindow("main");
     switch (data.messageType) {
+      case 1: // 加入房间
+      case 2: // 发送peer
+      case 3: // 退出房间
+        if (mainWin && (data.messageType == 1 || data.messageType == 3)) {
+          mainWin.webContents.send("mainMessage", data);
+        }
+        if (meetingWin) {
+          meetingWin.webContents.send("meetingMessage", data);
+        }
+        break
       case 8: // 好友申请
       case 12: // 处理好友申请
         if (!mainWin) {
