@@ -377,7 +377,7 @@ public class MeetingServiceImpl extends ServiceImpl<MeetingMapper, Meeting>
         meetingExitObj.setExitStatus(meetingMemberStatus.getStatus());
 
         messageSendDto.setMessageContent(JSONUtil.toJsonStr(meetingExitObj));
-        messageSendDto.setMessageId(meetingId);
+        messageSendDto.setMeetingId(meetingId);
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
         messageHandler.sendMessage(messageSendDto);
 

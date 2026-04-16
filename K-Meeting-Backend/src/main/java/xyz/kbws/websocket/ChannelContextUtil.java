@@ -126,7 +126,7 @@ public class ChannelContextUtil {
 
         if (MessageTypeEnum.EXIT_MEETING_ROOM.getValue().equals(messageSendDto.getMessageType())) {
             MeetingExitObj exitObj = JSONUtil.toBean((String) messageSendDto.getMessageContent(), MeetingExitObj.class);
-            removeContextFromGroup(exitObj.getExitUserId(), messageSendDto.getMessageId());
+            removeContextFromGroup(exitObj.getExitUserId(), messageSendDto.getMeetingId());
             List<MeetingMemberObj> meetingMemberObjList = redisComponent.getMeetingMemberList(messageSendDto.getMeetingId());
             List<MeetingMemberObj> onLineMemberList = meetingMemberObjList.stream().filter(item -> MeetingMemberStatus.NORMAL.getStatus().equals(item.getStatus())).collect(Collectors.toList());
             if (onLineMemberList.isEmpty()) {
