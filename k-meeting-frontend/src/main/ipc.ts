@@ -3,7 +3,7 @@ import { delWindow, getWindow, saveWindow } from './windowProxy'
 import { initWs, logout } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
-import { saveSysSetting } from './sysSetting'
+import { saveSysSetting, getSysSetting } from './sysSetting'
 import { is } from '@electron-toolkit/utils'
 import { join } from 'path'
 
@@ -81,7 +81,7 @@ const onLoginSuccess = () => {
     mainWindow.setMinimumSize(720, 480)
     mainWindow.setSize(720, 480)
     mainWindow.setResizable(false)
-    store.initUserId(userInfo.userId)
+    store.initUserId(userInfo.id)
     store.setData("userInfo", userInfo)
     initWs(wsUrl + userInfo.token)
   })

@@ -6,31 +6,31 @@ const router = createRouter({
     {
       path: '/',
       name: '登录',
-      component: () => import('@/pages/login/Login.vue')
+      component: () => import('@/views/login/Login.vue')
     },
     {
       path: '/home',
       name: '主页',
-      component: () => import('@/pages/Layout.vue'),
+      component: () => import('@/views/Layout.vue'),
       redirect: '/meetingMain',
       children: [{
         path: '/meetingMain',
         name: "首页",
-        component: () => import('@/pages/meeting/MeetingMain.vue'),
+        component: () => import('@/views/meeting/MeetingMain.vue'),
         meta: {
           code: "meeting"
         }
       },{
         path: '/contact',
         name: "联系人",
-        component: () => import('@/pages/contact/Contact.vue'),
+        component: () => import('@/views/contact/Contact.vue'),
         meta: {
           code: "contact"
         }
       },{
         path: '/screencap',
         name: "录屏",
-        component: () => import('@/pages/screencap/ScreenCap.vue'),
+        component: () => import('@/views/screencap/ScreenCap.vue'),
         meta: {
           code: "screencap"
         }
