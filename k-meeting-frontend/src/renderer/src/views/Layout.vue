@@ -142,6 +142,24 @@ const listenMessage = () => {
           meetingStore.updateMeeting(true)
         }
         break
+      case 3: // 退出会议
+              // 解析信令内容，获取退出状态和对应的用户 ID
+        const { exitStatus, exitUserId } = messageObj.messageContent
+
+        // 状态定义参考：3-被踢出会议，4-被拉黑
+        // 如果退出的是当前登录用户，且是因为被踢出或被拉黑
+        if ((exitStatus == 3 || exitStatus == 4) && exitUserId == userInfoStore.userInfo.userId) {
+          proxy.Confirm({
+            message: '你被强制退出会议',
+            showCancelBtn: false // 强制操作，不显示取消按钮
+          })
+
+          // 执行会议状态更新逻辑，将当前用户的会议状态设为 false
+          if (exitStatus == 2 || exitStatus == 3 || exitStatus == 4) {
+            meetingStore.updateMeeting(false)
+          }
+        }
+        break
       case 8:
         contactStore.updateLastUpdateTime()
         break

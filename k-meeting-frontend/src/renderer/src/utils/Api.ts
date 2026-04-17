@@ -25,9 +25,9 @@ const Api = {
   exitMeeting: "/meeting/exit", // 退出会议
   inviteMember: "/meeting/inviteMember", // 邀请成员
   acceptInvite: "/meeting/accept", // 接受邀请
-  finishMeeting: "/meeting/finishMeeting", // 结束会议
-  kickOutMeeting: "/meeting/kickOutMeeting", // 踢出会议
-  blackMeeting: "/meeting/blackMeeting", // 拉黑
+  finishMeeting: "/meeting/finish", // 结束会议
+  kickOutMeeting: "/meeting/kickOut", // 踢出会议
+  blackMeeting: "/meeting/black", // 拉黑
   loadMeeting: "/meeting/loadMeeting", // 历史会议
   loadMeetingMembers: "/meeting/loadMeetingMembers", // 会议成员
   getCurrentMeeting: "/meeting/getCurrentMeeting", // 获取会议信息

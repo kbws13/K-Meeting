@@ -48,8 +48,7 @@
           v-show="memberOpened || chatOpened"
           :style="{ width: rightWidth + 'px' }"
         >
-          {{ memberOpened ? '成员' : '' }}
-          {{ chatOpened ? '聊天' : '' }}
+          <MemberPanel v-show="memberOpened" ref="memberPanelRef"></MemberPanel>
         </div>
       </div>
 
@@ -72,6 +71,7 @@ import { mitter } from '@/eventbus/eventBus'
 import Footer from './Footer.vue'
 import MemberList from './MemberList.vue'
 import SplitLine from './SplitLine.vue'
+import MemberPanel from '../member/MemberPanel.vue'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useMeetingStore } from '@/stores/MeetingStore'
 const userInfoStore = useUserInfoStore()
