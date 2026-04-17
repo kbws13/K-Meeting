@@ -140,17 +140,18 @@ const shareScreenHandler = () => {
   shareScreen.value = true
 }
 
+const emit = defineEmits(['openChat', 'openMember'])
 const inviteMemberRef = ref()
 
 /**
- * 底部或侧边工具栏点击事件处理
- * @param {Object} item 点击的按钮对象
+ * 工具栏按钮点击处理器
+ * @param {Object} item 点击的按钮配置对象
  */
 const clickHandler = (item) => {
-  // 1. 处理按钮的激活/选中状态切换
+  // 1. 处理按钮的激活高亮状态（单选逻辑）
   if (item.showActive) {
     buttons.value.forEach((element) => {
-      // 如果当前遍历项是点击的项且未激活，则设为激活；否则设为非激活
+      // 如果是当前点击的按钮且之前未激活，则设为 true；否则全部设为 false
       if (element.btnType == item.btnType && !item.active) {
         element.active = true
       } else {
@@ -159,11 +160,19 @@ const clickHandler = (item) => {
     })
   }
 
-  // 2. 根据按钮类型分发具体的业务逻辑
+  // 2. 根据 btnType 分发具体的业务逻辑
   switch (item.btnType) {
     case 'invite':
-      // 触发邀请成员组件的显示方法
+      // 调起邀请成员弹窗组件
       inviteMemberRef.value.show()
+      break
+    case 'members':
+      // 通知父组件打开成员列表侧边栏
+      emit('openMember')
+      break
+    case 'chat':
+      // 通知父组件打开聊天侧边栏
+      emit('openChat')
       break
   }
 }

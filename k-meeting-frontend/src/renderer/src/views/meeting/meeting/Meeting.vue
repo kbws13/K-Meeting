@@ -38,8 +38,26 @@
             </div>
           </div>
         </div>
+        <SplitLine
+          v-show="memberOpened || chatOpened"
+          :initWidth="initRightWidth"
+          @widthChange="widthChange"
+        ></SplitLine>
+
+        <div
+          v-show="memberOpened || chatOpened"
+          :style="{ width: rightWidth + 'px' }"
+        >
+          {{ memberOpened ? '成员' : '' }}
+          {{ chatOpened ? '聊天' : '' }}
+        </div>
       </div>
-      <Footer :deviceInfo="deviceInfo"></Footer>
+
+      <Footer
+        :deviceInfo="deviceInfo"
+        @openChat="openChatHandler"
+        @openMember="openMemberHandler"
+      ></Footer>
     </template>
     <template v-else>
       <div class="check-env">正在检查系统环境......</div>
@@ -53,6 +71,7 @@ import { getCurrentInstance, nextTick, onMounted, onUnmounted, reactive, ref } f
 import { mitter } from '@/eventbus/eventBus'
 import Footer from './Footer.vue'
 import MemberList from './MemberList.vue'
+import SplitLine from './SplitLine.vue'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useMeetingStore } from '@/stores/MeetingStore'
 const userInfoStore = useUserInfoStore()
@@ -179,6 +198,32 @@ onUnmounted(() => {
   mitter.off('shareScreen', shareScreenHandler)
   window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
+
+// 右侧容器
+const initRightWidth = 400
+const rightWidth = ref(initRightWidth)
+
+/**
+ * 处理侧边栏宽度拖拽变更
+ * @param {number} width 拖拽后的新宽度
+ */
+const widthChange = (width) => {
+  rightWidth.value = width
+}
+
+// 成员列表开关逻辑
+const memberOpened = ref(false)
+const openMemberHandler = () => {
+  chatOpened.value = false // 互斥逻辑：打开成员列表时关闭聊天
+  memberOpened.value = !memberOpened.value
+}
+
+// 聊天窗口开关逻辑
+const chatOpened = ref(false)
+const openChatHandler = () => {
+  memberOpened.value = false // 互斥逻辑：打开聊天时关闭成员列表
+  chatOpened.value = !chatOpened.value
+}
 </script>
 
 <style scoped lang="scss">
