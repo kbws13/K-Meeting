@@ -7,6 +7,15 @@
         proxy.Utils.isEmpty(screenId) ? 'member-my' : '',
         LAYOUT_MAP[layoutType]
       ]"
+      @click="
+        selectMember(
+          userInfoStore.userInfo.userId,
+          userInfoStore.userInfo.nickName,
+          userInfoStore.userInfo.sex,
+          (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
+            !proxy.Utils.isEmpty(screenId)
+        )
+      "
     >
       <div class="video-panel"
         v-show="
@@ -51,6 +60,7 @@
         LAYOUT_MAP[layoutType]
       ]"
       v-for="(item, index) in memberList"
+      @click="selectMember(item.userId, item.nickName, item.sex, item.openVideo)"
     >
       <div class="video-panel" v-show="item.openVideo">
         <video :id="`member_${item.userId}`" autoplay playsinline loop></video>
@@ -664,7 +674,7 @@ const memberVideoChange = (sendUserId, openVideo) => {
   member.openVideo = openVideo
   if (currentSelectUserId.value == member.userId) {
     emit('selectMember', {
-      srcObject: document.querySelector('#meber_' + member.userId).srcObject,
+      srcObject: document.querySelector('#member_' + member.userId).srcObject,
       userId: member.userId,
       nickname: member.nickName,
       sex: member.sex,
@@ -730,7 +740,68 @@ const shareScreenHandler = async (_screenId) => {
   }
 }
 
+/**
+ * 布局切换处理函数
+ * @param {number} type 布局类型 (0: 宫格, 1: 顶部列表, 2: 右侧列表)
+ */
+const layoutChangeHandler = (type) => {
+  // 1. 如果点击的是当前已选中的布局，则不执行任何操作
+  if (layoutType.value == type) {
+    return
+  }
+
+  // 2. 更新布局类型
+  layoutType.value = type
+
+  // 3. 自动聚焦逻辑：如果切换到了非宫格布局 (type != 0)，且当前没有选中任何成员
+  if (type != 0 && !currentSelectUserId.value) {
+    // 默认选中当前登录用户自己
+    currentSelectUserId.value = userInfoStore.userInfo.userId
+
+    // 触发成员选择事件，将本地流渲染到主展示区域
+    emit('selectMember', {
+      srcObject: localVideoRef.value.srcObject,
+      userId: userInfoStore.userInfo.userId,
+      nickName: userInfoStore.userInfo.nickName,
+      sex: userInfoStore.userInfo.sex,
+      openVideo:
+        (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
+        !proxy.Utils.isEmpty(screenId.value)
+    })
+  }
+}
+
+/**
+ * 选中成员事件处理
+ * @param {string} userId 成员ID
+ * @param {string} nickName 昵称
+ * @param {number} sex 性别
+ * @param {boolean} openVideo 是否开启视频
+ */
+const selectMember = (userId, nickName, sex, openVideo) => {
+  // 1. 如果当前是宫格布局 (layoutType == 0)，则不允许手动切换主画面
+  if (layoutType.value == 0) {
+    return
+  }
+
+  // 2. 如果点击的是非当前已选中的用户
+  if (currentSelectUserId.value !== userId) {
+    // 触发 selectMember 事件，并从对应的 video 标签中抓取当前的媒体流 (srcObject)
+    emit('selectMember', {
+      srcObject: document.querySelector('#member_' + userId).srcObject,
+      userId,
+      nickName,
+      sex,
+      openVideo
+    })
+  }
+
+  // 3. 更新当前选中的用户 ID 状态
+  currentSelectUserId.value = userId;
+}
+
 onMounted(() => {
+  mitter.on('layoutChange', layoutChangeHandler)
   mitter.on('shareScreen', shareScreenHandler)
   mitter.on('micSwitch', micSwitchHandler)
   mitter.on('cameraSwitch', cameraSwitchHandler)
@@ -739,6 +810,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  mitter.off('layoutChange', layoutChangeHandler)
   mitter.off('shareScreen', shareScreenHandler)
   mitter.off('micSwitch', micSwitchHandler)
   mitter.off('cameraSwitch', cameraSwitchHandler)

@@ -14,8 +14,29 @@
     <template v-if="inited">
       <div class="meeting-panel">
         <div :class="['layout', LAYOUT_CLASS[layoutType]]">
-          <MemberList :deviceInfo="deviceInfo" @exitMeeting="forceExit"></MemberList>
-          <div v-show="layoutType != 0"></div>
+          <MemberList :deviceInfo="deviceInfo" @exitMeeting="forceExit" @selectMember="selectMemberHandler"></MemberList>
+
+          <div
+            v-show="layoutType != 0"
+            :class="['show-panel', transformShowPanelVideo && !screenId ? 'transform-video' : '']"
+            :style="{ height: `calc(100vh - ${(layoutType == 1 ? 123 : 0) + 90}px)` }"
+          >
+            <video
+              autoplay
+              playsinline
+              loop
+              muted
+              ref="centerScreenRef"
+              v-show="openVideoRef"
+            ></video>
+
+            <div v-show="!openVideoRef" class="user-info">
+              <Avatar :avatar="selectUserInfo.userId"></Avatar>
+              <div :class="['user-name', 'iconfont', proxy.Utils.getSexIcon(selectUserInfo.sex)]">
+                {{ selectUserInfo.nickName }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <Footer :deviceInfo="deviceInfo"></Footer>
@@ -28,10 +49,14 @@
 
 <script setup lang="ts">
 import Header from './Header.vue'
-import { getCurrentInstance, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { mitter } from '../../../eventbus/eventBus'
+import { getCurrentInstance, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { mitter } from '@/eventbus/eventBus'
 import Footer from './Footer.vue'
 import MemberList from './MemberList.vue'
+import { useUserInfoStore } from '@/stores/UserInfoStore'
+import { useMeetingStore } from '@/stores/MeetingStore'
+const userInfoStore = useUserInfoStore()
+const meetingStore = useMeetingStore()
 
 const { proxy } = getCurrentInstance()
 
@@ -99,9 +124,51 @@ const forceExit = () => {
   titlebarRef.value.custClose()
 }
 
+const screenId = ref()
+const shareScreenHandler = (_screenId) => {
+  screenId.value = _screenId
+}
+
+const centerScreenRef = ref()
+const transformShowPanelVideo = ref(false)
+const openVideoRef = ref(true)
+const selectUserInfo = ref({})
+
+/**
+ * 选中成员处理函数
+ * @param {Object} memberData 包含流对象、ID、性别、昵称及视频开启状态
+ */
+const selectMemberHandler = async ({ srcObject, userId, sex, nickName, openVideo }) => {
+  // 1. 如果当前是宫格布局 (layoutType == 0)，则不执行聚焦逻辑
+  if (layoutType.value == 0) {
+    return
+  }
+
+  // 2. 更新当前聚焦用户的信息
+  selectUserInfo.value = {
+    userId,
+    nickName,
+    sex
+  }
+
+  // 3. 同步视频开启状态
+  openVideoRef.value = openVideo
+
+  // 4. 等待 DOM 更新后，将视频流绑定到主播放器引用
+  await nextTick()
+  centerScreenRef.value.srcObject = srcObject
+
+  // 5. 镜像处理：如果是看自己的摄像头，则开启水平翻转（镜像）
+  if (userId == userInfoStore.userInfo.userId) {
+    transformShowPanelVideo.value = true
+  } else {
+    transformShowPanelVideo.value = false
+  }
+}
+
 onMounted(() => {
   mitter.on("layoutChange", layoutChangeHandler)
-
+  mitter.on('shareScreen', shareScreenHandler)
   window.electron.ipcRenderer.on("preCloseWindow", () => {
     closeMeeting()
   })
@@ -109,7 +176,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   mitter.off("layoutChange", layoutChangeHandler)
-
+  mitter.off('shareScreen', shareScreenHandler)
   window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
 </script>

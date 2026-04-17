@@ -1,41 +1,169 @@
 <template>
-  <div class="header" :style="{ 'border-bottom': showBottomBorder ? '1px solid #ddd' : 'none'}">
-    <div class="title" v-if="title">{{ title }}</div>
-    <Titlebar :closeType="closeType" :showMax="showMax"></Titlebar>
+  <div class="header">
+    <div class="left">会议详情</div>
+    <div class="right">
+      <el-popover placement="top-end" :width="260" trigger="click" ref="layoutPopoverRef">
+        <template #reference>
+          <div class="layout-btn">
+            <div :class="['cur-layout-icon iconfont', 'icon-' + currentLayout.icon]"></div>
+            <div class="text">切换布局</div>
+            <div class="iconfont icon-narrow-down"></div>
+          </div>
+        </template>
+
+        <div class="layout">
+          <div
+            class="layout-item"
+            v-for="item in layoutList"
+            @click="selectLayout(item)"
+          >
+            <div
+              :class="[
+                'iconfont',
+                'icon-' + item.icon,
+                currentLayout.type == item.type ? 'active' : ''
+              ]"
+            ></div>
+            <div class="name">{{ item.name }}</div>
+          </div>
+        </div>
+      </el-popover>
+
+      <el-divider direction="vertical" />
+    </div>
   </div>
+
+  <slot></slot>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { mitter } from '@/eventbus/eventBus'
 
-const { proxy } = getCurrentInstance()
-const router = useRouter()
-const route = useRoute()
+const layoutList = ref([
+  {
+    type: 0,
+    name: '宫格布局',
+    icon: "layout-grid",
+  },
+  {
+    type: 1,
+    name: "顶部缩略图",
+    icon: "layout-top",
+  },
+  {
+    type: 2,
+    name: "侧边缩略图",
+    icon: "layout-right",
+  }
+])
 
-interface Props {
-  title: string,
-  showMax?: boolean;
-  showBottomBorder: boolean;
-  /** 0: 关闭, 1: 隐藏 */
-  closeType?: number;
+const currentLayout = ref(layoutList.value[0])
+const layoutPopoverRef = ref()
+
+/**
+ * 切换布局
+ * @param {Object} item 选中的布局对象
+ */
+const selectLayout = (item) => {
+  currentLayout.value = item
+  // 触发全局布局改变事件，通知 Meeting.vue 更新布局
+  mitter.emit('layoutChange', item.type)
+  // 切换后自动隐藏弹出框
+  layoutPopoverRef.value.hide()
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  showMax: false,
-  closeType: 1,
-  showBottomBorder: false
-});
-
 </script>
-
-
 
 <style scoped lang="scss">
 .header {
-  height: 30px;
-  -webkit-app-region: drag;
-  text-align: center;
-  padding-top: 5px;
+  height: 40px;
+  -webkit-app-region: drag; // 窗口可拖拽区域
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+
+  .left {
+    padding-left: 20px;
+  }
+
+  .right {
+    margin-right: 100px;
+    display: flex;
+    align-items: center;
+
+    .layout-btn {
+      -webkit-app-region: no-drag; // 按钮区域禁止拖拽，确保点击生效
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+
+      .cur-layout-icon {
+        font-weight: bold;
+        color: var(--text2);
+        font-size: 13px;
+      }
+
+      .text {
+        margin: 0px 3px;
+      }
+
+      .icon-narrow-down {
+        font-size: 10px;
+      }
+
+      &:hover {
+        background: #ddd;
+      }
+    }
+  }
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); // 三列等宽网格
+  grid-gap: 20px;
+
+  .layout-item {
+    text-align: center;
+    cursor: pointer;
+
+    &:hover {
+      .iconfont {
+        &::before {
+          border: 2px solid var(--blue);
+          color: #d0ddfc;
+        }
+      }
+    }
+
+    .iconfont {
+      font-size: 50px;
+      border-radius: 5px;
+      padding: 0px;
+
+      &::before {
+        border: 2px solid #fff;
+        padding: 2px;
+        border-radius: 5px;
+        color: #b4b4b4;
+      }
+    }
+
+    .name {
+      font-size: 12px;
+    }
+
+    .active {
+      &::before {
+        border: 2px solid var(--blue);
+        color: #d0ddfc;
+      }
+    }
+  }
 }
 </style>
