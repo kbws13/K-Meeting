@@ -3,7 +3,7 @@
     <div class="btn-list">
       <div class="btn-item" @click="micClickHandler">
         <MicIcon
-          :defaultOpen="deviceInfo.micEnable && deviceInfo.micOpen"
+          :defaultOpen="props.deviceInfo.micEnable && props.deviceInfo.micOpen"
           :size="20"
           :showLabel="false"
           v-model="micInfo"
@@ -11,7 +11,7 @@
         >
         </MicIcon>
         <div class="name">
-          {{ deviceInfo.micEnable && deviceInfo.micOpen ? '静音' : '取消静音' }}
+          {{ props.deviceInfo.micEnable && props.deviceInfo.micOpen ? '静音' : '取消静音' }}
         </div>
       </div>
 
@@ -19,11 +19,11 @@
         <div
           :class="[
             'iconfont',
-            deviceInfo.cameraEnable && deviceInfo.cameraOpen ? 'icon-video2' : 'icon-video2-close'
+            props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen ? 'icon-video2' : 'icon-video2-close'
           ]"
         ></div>
         <div class="name">
-          {{ deviceInfo.cameraEnable && deviceInfo.cameraOpen ? '关闭视频' : '开启视频' }}
+          {{ props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen ? '关闭视频' : '开启视频' }}
         </div>
       </div>
 
@@ -85,7 +85,6 @@ const props = defineProps({
   }
 })
 
-const deviceInfo = ref({})
 const shareScreen = ref(route.query.addType == 1)
 // 麦克风信息
 const micInfoRef = ref()
