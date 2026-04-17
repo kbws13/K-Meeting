@@ -6,12 +6,12 @@ package xyz.kbws.constant;
  * @description:
  */
 public interface FileConstant {
-    String FILE_FOLDER_FILE = "file/";
-    String FILE_FOLDER_TEMP = "/temp/";
-    String FILE_FOLDER_AVATAR_NAME = "avatar/";
+    String FILE_FOLDER_FILE = "file\\";
+    String FILE_FOLDER_TEMP = "\\temp\\";
+    String FILE_FOLDER_AVATAR_NAME = "avatar\\";
     String IMAGE_SUFFIX = ".jpg";
     String VIDEO_SUFFIX = ".mp4";
-    String DEFAULT_AVATAR = "/user.png";
+    String DEFAULT_AVATAR = "user.png";
     String VIDEO_CODE_HEVC = "hevc";
     String PING = "ping";
 }

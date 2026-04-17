@@ -212,14 +212,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public UserVO updateUserInfo(MultipartFile avatar, User user) throws IOException {
         if (avatar != null) {
-            String folder = appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_TEMP + FileConstant.FILE_FOLDER_AVATAR_NAME;
+            String folder = appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_FILE + FileConstant.FILE_FOLDER_AVATAR_NAME;
             File folderFile = new File(folder);
             if (!folderFile.exists()) {
                 folderFile.mkdirs();
             }
             String realFileName = user.getId() + FileConstant.IMAGE_SUFFIX;
-            String filePath = folderFile + realFileName;
-            File tempFile = new File(appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_TEMP + RandomUtil.randomString(30));
+            String filePath = folder + realFileName;
+            File tempFolder = new File(appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_TEMP);
+            if (!tempFolder.exists()) {
+                tempFolder.mkdirs();
+            }
+            File tempFile = new File(tempFolder, RandomUtil.randomString(30));
             avatar.transferTo(tempFile);
             ffmpegComponent.createImageThumbnail(tempFile, filePath);
         }

@@ -40,8 +40,12 @@ public class AuthInterceptor {
             if (mustUserRoleEnum == null) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
+            String token = request.getHeader("token");
+            if (StrUtil.isBlank(token)) {
+                token = request.getParameter("token");
+            }
             // 当前登录用户
-            UserVO userVO = redisComponent.getLoginUser(request.getHeader("token"));
+            UserVO userVO = redisComponent.getLoginUser(token);
             if (userVO == null) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }

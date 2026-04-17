@@ -48,6 +48,9 @@ public class LoginUserInterceptor implements HandlerInterceptor {
 
         String token = request.getHeader("token");
         if (StrUtil.isBlank(token)) {
+            token = request.getParameter("token");
+        }
+        if (StrUtil.isBlank(token)) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "未登录");
         }
         LoginUser loginUser = redisComponent.getLoginUser(token);
