@@ -10,7 +10,7 @@ const Api = {
   logout: "/user/logout", // 退出
   updatePassword: "/user/changePassword", // 修改密码
   getSysSetting: "/account/getSysSetting", // 获取系统设置
-  updateUserInfo: "/account/updateUserInfo", // 更新用户信息
+  updateUserInfo: "/user/update", // 更新用户信息
 
   // --- 文件与资源 ---
   getResource: "/api/file/getResource", // 资源

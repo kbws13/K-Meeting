@@ -187,6 +187,15 @@ const getResourcePath = ({
   return `${domain}${Api.getResource}?messageId=${messageId}&fileType=${fileType}${thumbnail ? '&thumbnail=true' : ''}`
 }
 
+// 建议将 userId 转换为字符串，并确保 token 存在
+const getAvatarPath = (userId: string | number, forceUpdate = false) => {
+  const token = getToken() || '';
+  const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_DOMAIN : '';
+  // 确保 userId 是字符串，避免 Vue 类型检查警告
+  const userIdStr = String(userId);
+  return `${baseUrl}${Api.getAvatar}?userId=${userIdStr}&token=${token}${forceUpdate ? '&v=' + new Date().getTime() : ''}`;
+}
+
 /**
  * 格式化会议号（三位一空格）
  */

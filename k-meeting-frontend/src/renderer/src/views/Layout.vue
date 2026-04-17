@@ -2,7 +2,16 @@
   <div class="layout">
     <div class="left">
       <div class="top-panel">
-        <div class="avatar"></div>
+        <div class="avatar">
+          <Avatar
+            ref="avatarRef"
+            :width="30"
+            :avatar="userInfoStore.userInfo.userId"
+            :update="true"
+            @click="showUserInfo"
+          >
+          </Avatar>
+        </div>
         <div class="top-menus">
           <div
             :class="['menu-item', item.codes.includes(route.meta.code as string) ? 'active' : '']"
@@ -37,6 +46,7 @@
       <router-view></router-view>
     </div>
   </div>
+  <UpdateUser ref="updateUserRef" @reloadInfo="reloadInfoHandler"></UpdateUser>
 </template>
 
 <script setup lang="ts">
@@ -45,6 +55,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '../stores/UserContactStore'
 import { mitter } from '../eventbus/eventBus'
+import Avatar from '../components/Avatar.vue'
+import UpdateUser from './UpdateUser.vue'
 
 const { proxy } = getCurrentInstance() as any
 const route = useRoute()
@@ -148,6 +160,17 @@ const loadContactApplyCount = async () => {
     return
   }
   leftTopMenus.value[1].messageCount = result.data
+}
+
+const updateUserRef = ref()
+const showUserInfo = () => {
+  updateUserRef.value.show()
+}
+
+const avatarRef = ref()
+const reloadInfoHandler = (data) => {
+  userInfoStore.setInfo(data)
+  avatarRef.value.updateAvatarUrl()
 }
 
 watch(
