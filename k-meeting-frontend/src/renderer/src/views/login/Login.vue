@@ -81,8 +81,8 @@
 
       <div class="bottom-link">
         <span class="a-link no-account" @click="changeOptype">{{
-          isLogin ? '没有账号' : '已有账号？'
-        }}</span>
+            isLogin ? '没有账号' : '已有账号？'
+          }}</span>
       </div>
     </el-form>
   </div>

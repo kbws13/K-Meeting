@@ -231,6 +231,7 @@ export default {
   getLocalResource,
   getToken,
   getResourcePath,
+  getAvatarPath,
   formatMeetingNo,
   getSexIcon
 }
