@@ -24,7 +24,7 @@ const Api = {
   joinMeeting: "/meeting/join", // 加入会议
   exitMeeting: "/meeting/exit", // 退出会议
   inviteMember: "/meeting/inviteMember", // 邀请成员
-  acceptInvite: "/meeting/acceptInvite", // 接受邀请
+  acceptInvite: "/meeting/accept", // 接受邀请
   finishMeeting: "/meeting/finishMeeting", // 结束会议
   kickOutMeeting: "/meeting/kickOutMeeting", // 踢出会议
   blackMeeting: "/meeting/blackMeeting", // 拉黑

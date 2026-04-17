@@ -57,11 +57,13 @@ import { useContactStore } from '../stores/UserContactStore'
 import { mitter } from '../eventbus/eventBus'
 import Avatar from '../components/Avatar.vue'
 import UpdateUser from './UpdateUser.vue'
+import { useMeetingStore } from '../stores/MeetingStore'
 
 const { proxy } = getCurrentInstance() as any
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const meetingStore = useMeetingStore()
 const contactStore = useContactStore()
 
 /**
@@ -133,8 +135,35 @@ const listenMessage = () => {
   window.electron.ipcRenderer.on('mainMessage', (e, messageObj) => {
     console.log("收到消息", messageObj)
     switch (messageObj.messageType) {
+      case 1: // 加入会议
+        const newMember = messageObj.messageContent.newMember
+        // 判断加入会议的成员是否为当前登录用户
+        if (newMember.userId === userInfoStore.userInfo.userId) {
+          meetingStore.updateMeeting(true)
+        }
+        break
       case 8:
         contactStore.updateLastUpdateTime()
+        break
+      case 9: // 收到会议邀请
+              // 如果当前用户已经在会议中，则直接忽略邀请
+        if (meetingStore.inMeeting) {
+          return
+        }
+
+        // 解析邀请信息：包含会议名称、ID、邀请人姓名
+        const { meetingName, meetingId, inviteUserName } = messageObj.messageContent
+
+        // 弹出确认对话框
+        proxy.Confirm({
+          message: `【${inviteUserName}】邀请你加入会议【${meetingName}】`,
+          okText: '接受邀请',
+          cancelText: '拒绝',
+          okfun: () => {
+            // 用户点击“接受邀请”后执行的回调函数
+            acceptInvite(meetingId)
+          }
+        })
         break
       case 12:
         let result = ''
@@ -171,6 +200,35 @@ const avatarRef = ref()
 const reloadInfoHandler = (data) => {
   userInfoStore.setInfo(data)
   avatarRef.value.updateAvatarUrl()
+}
+
+/**
+ * 接受会议邀请
+ * @param {string} meetingId 会议ID
+ */
+const acceptInvite = async (meetingId) => {
+  // 1. 调用后端接口，确认接受邀请
+  let result = await proxy.Request({
+    url: proxy.Api.acceptInvite,
+    params: {
+      meetingId
+    }
+  })
+
+  // 2. 如果请求失败或被取消，直接返回
+  if (!result) {
+    return
+  }
+
+  // 3. 接口调用成功后，通知 Electron 主进程开启“会议详情”窗口
+  window.electron.ipcRenderer.send('openWindow', {
+    title: '会议详情',
+    windowId: 'meeting',
+    path: '/meeting',
+    width: 1310,
+    height: 800,
+    maximizable: true
+  })
 }
 
 watch(

@@ -81,6 +81,13 @@ const connectWs = (): void => {
         }
         break
       case 8: // 好友申请
+      case 9: // 邀请入会
+      case 10:
+        if (!mainWin) {
+          return
+        }
+        mainWin.webContents.send("mainMessage", data);
+        break
       case 11:
         if (!meetingWin) {
           return

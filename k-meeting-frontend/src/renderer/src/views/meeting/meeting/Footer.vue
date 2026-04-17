@@ -63,6 +63,7 @@
     </div>
   </div>
   <SelectScreen ref="selectScreenRef"></SelectScreen>
+  <InviteMember ref="inviteMemberRef"></InviteMember>
 </template>
 
 <script setup lang="ts">
@@ -74,6 +75,7 @@ import { mitter } from '../../../eventbus/eventBus'
 const meetingStore = useMeetingStore()
 const route = useRoute()
 import SelectScreen from './SelectScreen.vue'
+import InviteMember from '../invite/InviteMember.vue'
 
 const props = defineProps({
   deviceInfo: {
@@ -136,6 +138,34 @@ const shareScreenClickHandler = () => {
  */
 const shareScreenHandler = () => {
   shareScreen.value = true
+}
+
+const inviteMemberRef = ref()
+
+/**
+ * 底部或侧边工具栏点击事件处理
+ * @param {Object} item 点击的按钮对象
+ */
+const clickHandler = (item) => {
+  // 1. 处理按钮的激活/选中状态切换
+  if (item.showActive) {
+    buttons.value.forEach((element) => {
+      // 如果当前遍历项是点击的项且未激活，则设为激活；否则设为非激活
+      if (element.btnType == item.btnType && !item.active) {
+        element.active = true
+      } else {
+        element.active = false
+      }
+    })
+  }
+
+  // 2. 根据按钮类型分发具体的业务逻辑
+  switch (item.btnType) {
+    case 'invite':
+      // 触发邀请成员组件的显示方法
+      inviteMemberRef.value.show()
+      break
+  }
 }
 
 // 生命周期：组件挂载时监听共享事件
