@@ -76,8 +76,8 @@ public class FileController {
 
     @RequestMapping("/getAvatar")
     @AuthCheck(mustRole = UserConstant.user)
-    public void getAvatar(HttpServletResponse response, @CurrentUser LoginUser loginUser) {
-        String filePath = appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_FILE + FileConstant.FILE_FOLDER_AVATAR_NAME + loginUser.getUserId() + FileConstant.IMAGE_SUFFIX;
+    public void getAvatar(HttpServletResponse response, @CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        String filePath = appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_FILE + FileConstant.FILE_FOLDER_AVATAR_NAME + userId + FileConstant.IMAGE_SUFFIX;
         response.setContentType("image/jpg");
         File file = new File(filePath);
         if (!file.exists()) {

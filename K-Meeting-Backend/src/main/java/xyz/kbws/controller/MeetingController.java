@@ -133,8 +133,10 @@ public class MeetingController {
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/kickOut")
     public BaseResponse<Boolean> kickOut(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
-        Integer targetUserId = UserIdCodec.decode(userId);
-        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.KICK_OUT);
+        // TODO 暂时停止混淆方便测试
+        // Integer targetUserId = UserIdCodec.decode(userId);
+        // Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.KICK_OUT);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, Integer.parseInt(userId), MeetingMemberStatus.KICK_OUT);
         return ResultUtil.success(res);
     }
 
@@ -142,8 +144,10 @@ public class MeetingController {
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/black")
     public BaseResponse<Boolean> black(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
-        Integer targetUserId = UserIdCodec.decode(userId);
-        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        // TODO 暂时停止混淆方便测试
+        // Integer targetUserId = UserIdCodec.decode(userId);
+        // Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, Integer.parseInt(userId), MeetingMemberStatus.BLACKLIST);
         return ResultUtil.success(res);
     }
 
@@ -151,8 +155,10 @@ public class MeetingController {
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/finish")
     public BaseResponse<Boolean> finish(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
-        Integer targetUserId = UserIdCodec.decode(userId);
-        Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        // TODO 暂时停止混淆方便测试
+        // Integer targetUserId = UserIdCodec.decode(userId);
+        // Boolean res = meetingService.kickOutMeetingRoom(loginUser, targetUserId, MeetingMemberStatus.BLACKLIST);
+        Boolean res = meetingService.kickOutMeetingRoom(loginUser, Integer.parseInt(userId), MeetingMemberStatus.BLACKLIST);
         return ResultUtil.success(res);
     }
 
