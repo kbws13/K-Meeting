@@ -12,37 +12,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue'
 
 // 1. 定义屏幕源的接口
 interface ThumbnailSize {
-  width: number;
-  height: number;
+  width: number
+  height: number
 }
 
 interface ScreenSource {
-  displayId: string | number;
-  name: string;
-  thumbnail: string; // 通常是 base64 字符串
+  displayId: string | number
+  name: string
+  thumbnail: string // 通常是 base64 字符串
   // 根据 Electron 文档，可能还包含 appIcon 等其他属性
 }
 
 // 2. 定义组件的 Emit 事件
 const emit = defineEmits<{
-  (e: 'selectScreenDisplayId', displayId: string | number): void;
-}>();
+  (e: 'selectScreenDisplayId', displayId: string | number): void
+}>()
 
 // 3. 响应式变量
-const screenDisplayId = ref<string | number>();
-const screenSources = ref<ScreenSource[]>([]);
+const screenDisplayId = ref<string | number>()
+const screenSources = ref<ScreenSource[]>([])
 
 /**
  * 手动选择屏幕源
  */
 const selectSource = async (source: ScreenSource): Promise<void> => {
-  screenDisplayId.value = source.displayId;
-  emit('selectScreenDisplayId', screenDisplayId.value);
-};
+  screenDisplayId.value = source.displayId
+  emit('selectScreenDisplayId', screenDisplayId.value)
+}
 
 /**
  * 获取系统屏幕和窗口资源
@@ -53,23 +53,23 @@ const getScreen = async (): Promise<void> => {
     types: ['screen'],
     thumbnailSize: {
       width: 600,
-      height: 360,
+      height: 360
     }
-  });
+  })
 
-  screenSources.value = sources;
+  screenSources.value = sources
 
   // 默认选中第一个屏幕源
   if (sources.length > 0) {
-    screenDisplayId.value = sources[0].displayId;
-    emit('selectScreenDisplayId', screenDisplayId.value);
+    screenDisplayId.value = sources[0].displayId
+    emit('selectScreenDisplayId', screenDisplayId.value)
   }
-};
+}
 
 // 4. 生命周期钩子
 onMounted(() => {
-  getScreen();
-});
+  getScreen()
+})
 </script>
 
 <style scoped lang="scss">

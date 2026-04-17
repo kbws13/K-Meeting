@@ -12,11 +12,7 @@
         </template>
 
         <div class="layout">
-          <div
-            class="layout-item"
-            v-for="item in layoutList"
-            @click="selectLayout(item)"
-          >
+          <div class="layout-item" v-for="item in layoutList" @click="selectLayout(item)">
             <div
               :class="[
                 'iconfont',
@@ -38,23 +34,22 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { mitter } from '@/eventbus/eventBus'
 
 const layoutList = ref([
   {
     type: 0,
     name: '宫格布局',
-    icon: "layout-grid",
+    icon: 'layout-grid'
   },
   {
     type: 1,
-    name: "顶部缩略图",
-    icon: "layout-top",
+    name: '顶部缩略图',
+    icon: 'layout-top'
   },
   {
     type: 2,
-    name: "侧边缩略图",
-    icon: "layout-right",
+    name: '侧边缩略图',
+    icon: 'layout-right'
   }
 ])
 

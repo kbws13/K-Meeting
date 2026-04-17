@@ -8,7 +8,6 @@
     @close="dialogConfig.show = false"
   >
     <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
-
       <el-form-item label="会议号" prop="meetingNo" v-if="!formData.meetingId">
         <el-input clearable placeholder="请输入会议号" v-model.trim="formData.meetingNo"></el-input>
       </el-form-item>
@@ -59,6 +58,7 @@
 <script setup lang="ts">
 import { useUserInfoStore } from '../../../stores/UserInfoStore'
 import { getCurrentInstance, nextTick, ref } from 'vue'
+
 const userInfoStore = useUserInfoStore()
 const { proxy } = getCurrentInstance()
 
@@ -96,7 +96,6 @@ const addMeeting = () => {
 
     let params = {}
     Object.assign(params, formData.value)
-
 
     // 2. 发起网络请求
     // 根据是否含有 meetingId 动态决定调用“预约加入”还是“直接加入”接口
@@ -147,8 +146,8 @@ const show = async ({ meetingId, addType = 0 }) => {
     screenId = screenSources.value[0].id
   }
 
-  await nextTick();
-  formDataRef.value.resetFields();
+  await nextTick()
+  formDataRef.value.resetFields()
 
   // 填充表单初始数据
   formData.value = {
@@ -168,6 +167,7 @@ defineExpose({
 <style scoped lang="scss">
 .setting-panel {
   margin-bottom: 0px;
+
   :deep {
     .el-checkbox-group {
       display: flex;

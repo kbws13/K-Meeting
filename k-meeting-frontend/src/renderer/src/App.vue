@@ -10,6 +10,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 import { useUserInfoStore } from './stores/UserInfoStore'
 import { getCurrentInstance, onMounted } from 'vue'
+
 const { proxy } = getCurrentInstance()
 
 const userInfoStore = useUserInfoStore()
@@ -18,7 +19,7 @@ const saveUserInfoStore = async () => {
 }
 
 const onExitMeeting = () => {
-  window.electron.ipcRenderer.on('closeWindow', async (e, { windowId}) => {
+  window.electron.ipcRenderer.on('closeWindow', async (e, { windowId }) => {
     if (windowId === 'meeting') {
       await proxy.Request({
         url: proxy.Api.exitMeeting

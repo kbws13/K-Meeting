@@ -115,7 +115,7 @@ const logout = () => {
 
       // 2. 通知 Electron 主进程处理退出逻辑（如清理本地缓存、关闭窗口等）
       await window.electron.ipcRenderer.invoke('logout')
-      router.push("/")
+      router.push('/')
     }
   })
 }

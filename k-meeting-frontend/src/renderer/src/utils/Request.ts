@@ -1,9 +1,4 @@
-import axios, {
-  AxiosInstance,
-  InternalAxiosRequestConfig,
-  AxiosResponse,
-  AxiosRequestConfig
-} from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { ElLoading } from 'element-plus'
 // @ts-ignore
 import Message from '../utils/Message'
@@ -32,6 +27,7 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
  */
 interface RequestParams {
   url: string
+  method?: 'get' | 'post'
   params?: Record<string, any>
   dataType?: 'json' | string
   showLoading?: boolean
@@ -135,6 +131,7 @@ instance.interceptors.response.use(
 const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null> => {
   const {
     url,
+    method = 'post',
     params,
     dataType,
     showLoading = true,
@@ -142,47 +139,62 @@ const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null
     showError = true
   } = config
 
+  const requestMethod = method.toLowerCase()
   const isJson = dataType != null && dataType === 'json'
-  let contentType = isJson ? contentTypeJson : contentTypeForm
+  const contentType = isJson ? contentTypeJson : contentTypeForm
 
   // JSON 模式直接传原始对象；表单模式使用 FormData
   let requestBody: FormData | Record<string, any> | undefined
-  if (isJson) {
-    requestBody = params
-  } else {
-    let formData = new FormData()
-    if (params) {
-      for (let key in params) {
-        formData.append(key, params[key] === undefined ? '' : params[key])
+  if (requestMethod !== 'get') {
+    if (isJson) {
+      requestBody = params
+    } else {
+      const formData = new FormData()
+      if (params) {
+        for (const key in params) {
+          formData.append(key, params[key] === undefined ? '' : params[key])
+        }
       }
+      requestBody = formData
     }
-    requestBody = formData
   }
 
   let userInfoJson = localStorage.getItem('userInfo')
   const token = userInfoJson ? JSON.parse(userInfoJson).token : ''
 
-  let headers = {
-    'Content-Type': contentType,
+  const headers: Record<string, string> = {
     'X-Requested-With': 'XMLHttpRequest',
     token: token
   }
+  if (requestMethod !== 'get') {
+    headers['Content-Type'] = contentType
+  }
 
-  return instance
-    .post(url, requestBody, {
-      onUploadProgress: (event) => {
-        if (config.uploadProgressCallback) {
-          config.uploadProgressCallback(event)
-        }
-      },
-      responseType: responseType as any,
-      headers: headers,
-      // 以下是传给拦截器的自定义配置
-      // @ts-ignore (Axios 原生配置中没有这些属性，需要通过类型断言或强制转换传递)
-      showLoading: showLoading,
-      errorCallback: config.errorCallback,
-      showError: showError
-    } as AxiosRequestConfig)
+  const requestConfig = {
+    params: requestMethod === 'get' ? params : undefined,
+    onUploadProgress:
+      requestMethod === 'get'
+        ? undefined
+        : (event) => {
+            if (config.uploadProgressCallback) {
+              config.uploadProgressCallback(event)
+            }
+          },
+    responseType: responseType as any,
+    headers: headers,
+    // 以下是传给拦截器的自定义配置
+    // @ts-ignore (Axios 原生配置中没有这些属性，需要通过类型断言或强制转换传递)
+    showLoading: showLoading,
+    errorCallback: config.errorCallback,
+    showError: showError
+  } as AxiosRequestConfig
+
+  const requestPromise: Promise<ResponseData<T>> =
+    requestMethod === 'get'
+      ? (instance.get(url, requestConfig) as Promise<ResponseData<T>>)
+      : (instance.post(url, requestBody, requestConfig) as Promise<ResponseData<T>>)
+
+  return requestPromise
     .catch((error) => {
       if (error.showError) {
         Message.error(error.msg)

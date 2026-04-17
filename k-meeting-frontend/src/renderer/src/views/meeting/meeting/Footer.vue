@@ -72,6 +72,7 @@ import MicIcon from '../../../components/MicIcon.vue'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useRoute } from 'vue-router'
 import { mitter } from '../../../eventbus/eventBus'
+
 const meetingStore = useMeetingStore()
 const route = useRoute()
 import SelectScreen from './SelectScreen.vue'

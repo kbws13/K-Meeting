@@ -1,2 +1,3 @@
-import mitt from "mitt"
-export const mitter = mitt();
+import mitt from 'mitt'
+
+export const mitter = mitt()

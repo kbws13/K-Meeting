@@ -10,35 +10,32 @@
       <div class="volume" :style="{ height: volume * 1.5 + 'px' }"></div>
     </div>
 
-    <div
-      v-if="showLabel"
-      :class="['mic-label', micDeviceInfo.open ? 'active' : '']"
-    >
+    <div v-if="showLabel" :class="['mic-label', micDeviceInfo.open ? 'active' : '']">
       {{ micDeviceInfo.label }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 // 1. 定义 Props 接口
 interface Props {
-  size?: number;             // 尺寸，默认 30
-  modelValue?: object;       // 数据对象，默认 {}
-  showLabel?: boolean;       // 是否显示标签，默认 true
-  defaultOpen?: boolean;     // 默认是否开启，默认 true
+  size?: number // 尺寸，默认 30
+  modelValue?: object // 数据对象，默认 {}
+  showLabel?: boolean // 是否显示标签，默认 true
+  defaultOpen?: boolean // 默认是否开启，默认 true
 }
 
 // 2. 使用 withDefaults 定义默认值
 const props = withDefaults(defineProps<Props>(), {
   size: 30,
-  modelValue: () => ({}),    // 注意：对象默认值在 TS 中必须使用工厂函数
+  modelValue: () => ({}), // 注意：对象默认值在 TS 中必须使用工厂函数
   showLabel: true,
   defaultOpen: true
-});
+})
 
-const emit =defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 const micDeviceInfo = ref({})
 let stream = null
 
@@ -53,7 +50,7 @@ const getMicrophones = async () => {
     // 注意：此处原图中查找的是 'videoinput'，但函数名是 getMicrophones，
     // 通常麦克风应该是 'audioinput'。请根据实际业务需求确认。
     let defaultMic = devices.find((device) => {
-      return (device.kind === 'audioinput' && device.deviceId === 'default')
+      return device.kind === 'audioinput' && device.deviceId === 'default'
     })
 
     if (!defaultMic) {
@@ -174,7 +171,7 @@ const toggleMic = () => {
   if (micDeviceInfo.value.open) {
     showAnimation()
   } else {
-    stopAnimation();
+    stopAnimation()
   }
 }
 

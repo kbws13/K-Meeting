@@ -31,21 +31,22 @@
 <script setup lang="ts">
 import ApplyContact from './ApplyContact.vue'
 import { Search } from '@element-plus/icons-vue'
-import { ref, reactive, getCurrentInstance, nextTick, ComponentInternalInstance, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ComponentInternalInstance, getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { mitter } from '@/eventbus/eventBus.ts'
 
 // 定义联系人对象接口
 interface ContactUser {
-  id: string | number;
-  nickName: string;
-  avatar?: string;
-  [key: string]: any;
+  id: string | number
+  nickName: string
+  avatar?: string
+
+  [key: string]: any
 }
 
 // 获取组件实例并进行类型断言
 // 注意：在 TS 中直接解构 proxy 需要定义实例类型
-const { proxy } = getCurrentInstance() as ComponentInternalInstance & { proxy: any };
+const { proxy } = getCurrentInstance() as ComponentInternalInstance & { proxy: any }
 const router = useRouter()
 const route = useRoute()
 
@@ -99,7 +100,6 @@ onUnmounted(() => {
   mitter.off('reloadContact', loadContactUser)
 })
 </script>
-
 
 <style scoped lang="scss">
 .search-panel {

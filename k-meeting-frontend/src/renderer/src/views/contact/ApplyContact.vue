@@ -39,6 +39,7 @@
 import { getCurrentInstance, nextTick, ref } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import NoData from '@/components/NoData.vue'
+
 const { proxy } = getCurrentInstance()
 
 const dialogConfig = ref({
@@ -52,6 +53,7 @@ const userInfo = ref({})
 const search = async () => {
   let result = await proxy.Request({
     url: proxy.Api.searchContact,
+    method: 'get',
     params: {
       userId: userId.value
     }
@@ -66,6 +68,7 @@ const emit = defineEmits(['reload'])
 const contactApply = async () => {
   let result = await proxy.Request({
     url: proxy.Api.contactApply,
+    method: 'get',
     params: {
       receiveUserId: userInfo.value.userId
     }

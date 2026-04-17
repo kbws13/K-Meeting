@@ -58,6 +58,7 @@
 import MicIcon from '@/components/MicIcon.vue'
 import ScreenSelect from './ScreenSelect.vue'
 import { getCurrentInstance, onMounted, ref } from 'vue'
+
 const { proxy } = getCurrentInstance()
 
 const micInfoRef = ref()
@@ -111,7 +112,7 @@ const restart = () => {
 }
 
 onMounted(() => {
-  listenRecordTime();
+  listenRecordTime()
 })
 </script>
 

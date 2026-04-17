@@ -41,6 +41,7 @@ import QuickMeeting from './QuickMeeting.vue'
 import Today from './Today.vue'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { ref } from 'vue'
+
 const meetingStore = useMeetingStore()
 
 const quickMeetingRef = ref()
@@ -48,7 +49,7 @@ const quickMeeting = () => {
   quickMeetingRef.value.show()
 }
 
-const joinMeetingHandler = (addType = 0, screenId="") => {
+const joinMeetingHandler = (addType = 0, screenId = '') => {
   window.electron.ipcRenderer.send('openWindow', {
     title: '会议详情',
     windowId: 'meeting',

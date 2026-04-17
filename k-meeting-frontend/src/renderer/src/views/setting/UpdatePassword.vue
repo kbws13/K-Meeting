@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, nextTick, ComponentInternalInstance } from 'vue'
+import { ComponentInternalInstance, getCurrentInstance, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FormInstance, FormRules } from 'element-plus'
 
@@ -130,6 +130,4 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

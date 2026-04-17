@@ -7,10 +7,10 @@
 
 <script setup lang="ts">
 interface Props {
-  msg?: string; // 声明 msg 为可选的 string 类型
+  msg?: string // 声明 msg 为可选的 string 类型
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 </script>
 
 <style scoped lang="scss">

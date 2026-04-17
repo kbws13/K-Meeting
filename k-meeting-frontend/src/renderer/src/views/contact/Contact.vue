@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-
 import ContactList from './ContactList.vue'
 import ContactApplyList from './ContactApplyList.vue'
 </script>
@@ -36,6 +35,7 @@ import ContactApplyList from './ContactApplyList.vue'
       .part-title {
         margin-bottom: 10px;
       }
+
       width: 50%;
       padding: 0px 15px;
     }

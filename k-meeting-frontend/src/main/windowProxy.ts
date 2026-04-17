@@ -1,24 +1,19 @@
-const windowManage = {};
+const windowManage = {}
 
 const saveWindow = (id, window) => {
-  windowManage[id] = window;
+  windowManage[id] = window
 }
 
 const getWindow = (id) => {
-  return windowManage[id];
+  return windowManage[id]
 }
 
 const delWindow = (id) => {
-  delete windowManage[id];
+  delete windowManage[id]
 }
 
 const getWindowManage = () => {
-  return windowManage;
+  return windowManage
 }
 
-export {
-  saveWindow,
-  getWindow,
-  delWindow,
-  getWindowManage
-}
+export { saveWindow, getWindow, delWindow, getWindowManage }

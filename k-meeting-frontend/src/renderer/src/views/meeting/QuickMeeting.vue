@@ -8,7 +8,6 @@
     @close="dialogConfig.show = false"
   >
     <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
-
       <el-form-item label="会议号" prop="">
         <el-radio-group v-model="formData.meetingNoType">
           <el-radio :value="0">使用个人会议号</el-radio>
@@ -49,7 +48,6 @@
           v-model="formData.joinPassword"
         ></el-input>
       </el-form-item>
-
     </el-form>
   </Dialog>
 </template>
@@ -94,7 +92,7 @@ const formDataRef = ref<FormInstance>()
 
 const rules: FormRules = {
   meetingName: [{ required: true, message: '请输入会议主题' }],
-  joinPassword: [{ required: true, message: '请输入入会密码' }],
+  joinPassword: [{ required: true, message: '请输入入会密码' }]
 }
 
 const show = () => {
@@ -140,6 +138,4 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

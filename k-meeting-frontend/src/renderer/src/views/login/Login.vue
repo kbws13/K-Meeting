@@ -1,25 +1,25 @@
 <template>
-  <Header :showMax="true" :closeType="0"></Header>
-  <div class="loading-panel" v-if="showLoading">
+  <Header :show-max="true" :close-type="0" title=""></Header>
+  <div v-if="showLoading" class="loading-panel">
     <img src="../../assets/images/loading.gif" alt="loading" />
     <div>正在登录......</div>
   </div>
-  <div class="login-form" v-else>
+  <div v-else class="login-form">
     <div class="error-msg">{{ errorMsg }}</div>
-    <el-form :model="formData" ref="formDataRef" label-width="0px" @submit.prevent>
+    <el-form ref="formDataRef" :model="formData" label-width="0px" @submit.prevent>
       <el-form-item prop="email">
-        <el-input clearable placeholder="请输入邮箱" v-model.trim="formData.email" size="large">
+        <el-input v-model.trim="formData.email" clearable placeholder="请输入邮箱" size="large">
           <template #prefix>
             <span class="iconfont icon-email"></span>
           </template>
         </el-input>
       </el-form-item>
 
-      <el-form-item prop="nickName" v-if="!isLogin">
+      <el-form-item v-if="!isLogin" prop="nickName">
         <el-input
+          v-model.trim="formData.nickName"
           clearable
           placeholder="请输入昵称"
-          v-model.trim="formData.nickName"
           maxlength="15"
           size="large"
         >
@@ -31,9 +31,9 @@
 
       <el-form-item prop="password" size="large">
         <el-input
+          v-model.trim="formData.password"
           clearable
           placeholder="请输入密码"
-          v-model.trim="formData.password"
           show-password
           :maxlength="18"
         >
@@ -43,11 +43,11 @@
         </el-input>
       </el-form-item>
 
-      <el-form-item prop="rePassword" v-if="!isLogin">
+      <el-form-item v-if="!isLogin" prop="rePassword">
         <el-input
+          v-model.trim="formData.rePassword"
           clearable
           placeholder="请再次输入密码"
-          v-model.trim="formData.rePassword"
           show-password
           size="large"
         >
@@ -60,36 +60,36 @@
       <el-form-item prop="checkCode">
         <div class="check-code-panel">
           <el-input
+            v-model.trim="formData.checkCode"
             clearable
             placeholder="请输入验证码"
-            v-model.trim="formData.checkCode"
             size="large"
           >
             <template #prefix>
               <span class="iconfont icon-checkcode"></span>
             </template>
           </el-input>
-          <img :src="checkCodeUrl" class="check-code" @click="changeCheckCode" />
+          <img :src="checkCodeUrl" class="check-code" alt="check-code" @click="changeCheckCode" />
         </div>
       </el-form-item>
 
       <el-form-item>
         <el-button type="primary" class="login-btn" size="large" @click="submit">
-          {{ isLogin ? '登录' : '注册' }}</el-button
-        >
+          {{ isLogin ? '登录' : '注册' }}
+        </el-button>
       </el-form-item>
 
       <div class="bottom-link">
         <span class="a-link no-account" @click="changeOptype">{{
-            isLogin ? '没有账号' : '已有账号？'
-          }}</span>
+          isLogin ? '没有账号' : '已有账号？'
+        }}</span>
       </div>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, getCurrentInstance, type ComponentInternalInstance } from 'vue'
+import { type ComponentInternalInstance, getCurrentInstance, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { FormInstance } from 'element-plus'
 import md5 from 'js-md5'
@@ -121,9 +121,10 @@ const checkCodeUrl = ref<string>('')
  * 刷新/获取验证码
  */
 const changeCheckCode = async (): Promise<void> => {
-  const result = await (proxy as any).Request<CheckCodeResponse>({
-    url: (proxy as any).Api.checkCode
-  })
+  const result = (await (proxy as any).Request({
+    url: (proxy as any).Api.checkCode,
+    method: 'get'
+  })) as { data: CheckCodeResponse } | null
   if (!result) {
     return
   }
@@ -182,7 +183,9 @@ const submit = async (): Promise<void> => {
   if (!isLogin.value && !checkValue(null, formData.value.nickName, '请输入昵称')) {
     return
   }
-  if (!checkValue('checkPassword', formData.value.password, '密码只能是数字，字母，特殊字符8~18位')) {
+  if (
+    !checkValue('checkPassword', formData.value.password, '密码只能是数字，字母，特殊字符8~18位')
+  ) {
     return
   }
   if (!checkValue(null, formData.value.checkCode, '请输入验证码')) {
@@ -232,11 +235,11 @@ const submit = async (): Promise<void> => {
       wsUrl: import.meta.env.VITE_WS
     })
     userInfoStore.setInfo(result.data)
-    router.push('/home')
+    await router.push('/home')
   } else {
     // 注册成功提示并切换操作类型（通常是切回登录界面）
-    (proxy as any).Message.success('注册成功')
-    changeOptype()
+    ;(proxy as any).Message.success('注册成功')
+    await changeOptype()
   }
 }
 </script>
@@ -246,9 +249,11 @@ const submit = async (): Promise<void> => {
   height: 30px;
   -webkit-app-region: drag;
 }
+
 .email-select {
   width: 250px;
 }
+
 .loading-panel {
   height: calc(100vh - 32px);
   display: flex;
@@ -263,9 +268,10 @@ const submit = async (): Promise<void> => {
     margin-right: 3px;
   }
 }
+
 /* 来自图片 1 的代码 */
 .login-form {
-  padding: 0px 15px;
+  padding: 0 15px;
   height: calc(100vh - 32px);
 
   :deep(.el-input__wrapper) {

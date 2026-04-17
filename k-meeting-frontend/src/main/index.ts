@@ -1,23 +1,40 @@
-import { app, shell, BrowserWindow, ipcMain, Tray, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, shell, Tray } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
 import {
-  onLoginOrRegister,
-  onWinTitleOp,
-  onLoginSuccess,
+  onChangeLocalFolder,
   onGetScreenSource,
+  onGetSysSetting,
+  onLoginOrRegister,
+  onLoginSuccess,
+  onLogout,
+  onOpenLocalFile,
+  onOpenWindow,
+  onSaveSysSetting,
+  onSendPeerConnection,
   onStartRecoding,
   onStopRecording,
-  onOpenLocalFile,
-  onSaveSysSetting,
-  onGetSysSetting,
-  onChangeLocalFolder,
-  onLogout,
-  onOpenWindow, onSendPeerConnection
+  onWinTitleOp
 } from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
+import NativeImage = Electron.NativeImage
+
+let tray: Tray | null = null
+
+function createTrayIcon(): string | NativeImage {
+  if (process.platform !== 'darwin') {
+    return icon
+  }
+
+  const image = nativeImage.createFromPath(icon)
+  if (image.isEmpty()) {
+    return icon
+  }
+
+  return image.resize({ width: 18, height: 18, quality: 'best' })
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -37,7 +54,7 @@ function createWindow(): void {
     }
   })
 
-  saveWindow("main", mainWindow)
+  saveWindow('main', mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -47,31 +64,31 @@ function createWindow(): void {
    * 初始化系统托盘逻辑
    */
 
-  const tray = new Tray(icon);
+  tray = new Tray(createTrayIcon())
 
   // 定义菜单模板，使用 MenuItemConstructorOptions 接口进行类型约束
   const contextMenuTemplate: MenuItemConstructorOptions[] = [
     {
       label: '退出',
       click: () => {
-        app.quit();
+        app.quit()
       }
     }
-  ];
+  ]
 
-  const menu = Menu.buildFromTemplate(contextMenuTemplate);
+  const menu = Menu.buildFromTemplate(contextMenuTemplate)
 
-  tray.setToolTip("EasyMeeting");
-  tray.setContextMenu(menu);
+  tray.setToolTip('EasyMeeting')
+  tray.setContextMenu(menu)
 
   // 托盘点击事件
-  tray.on("click", () => {
+  tray.on('click', () => {
     if (mainWindow) {
       // 从任务栏显示并唤起窗口
-      mainWindow.setSkipTaskbar(false);
-      mainWindow.show();
+      mainWindow.setSkipTaskbar(false)
+      mainWindow.show()
     }
-  });
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -87,29 +104,29 @@ function createWindow(): void {
   }
 }
 
-onLoginOrRegister();
+onLoginOrRegister()
 
-onWinTitleOp();
+onWinTitleOp()
 
-onLoginSuccess();
+onLoginSuccess()
 
-onGetScreenSource();
+onGetScreenSource()
 
-onStartRecoding();
+onStartRecoding()
 
-onStopRecording();
+onStopRecording()
 
-onOpenLocalFile();
+onOpenLocalFile()
 
-onSaveSysSetting();
+onSaveSysSetting()
 
-onGetSysSetting();
+onGetSysSetting()
 
-onChangeLocalFolder();
+onChangeLocalFolder()
 
-onLogout();
+onLogout()
 
-onOpenWindow();
+onOpenWindow()
 
 onSendPeerConnection()
 

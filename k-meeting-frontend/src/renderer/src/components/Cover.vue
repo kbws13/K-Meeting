@@ -1,7 +1,7 @@
 <template>
   <div
-    class="image-panel"
     ref="coverRef"
+    class="image-panel"
     :style="{
       'border-radius': borderRadius,
       width: width ? width + 'px' : '100%',
@@ -17,25 +17,29 @@
       :initial-index="initialIndex"
     >
       <template #error>
-        <img src="../assets/404.png" class="el-image__inner" :style="{ 'object-fit': fit }" />
+        <img
+          src="../assets/404.png"
+          class="el-image__inner"
+          :style="{ 'object-fit': fit }"
+          alt="404"
+        />
       </template>
     </el-image>
   </div>
 </template>
 
 <script setup lang="ts">
-
 // 1. 定义 Props 接口
 interface Props {
-  source?: string | File;        // 支持字符串（URL）或文件对象
-  width?: number;                // 宽度
-  fit?: string; // 明确 fit 的可选值
-  preview?: boolean;             // 是否开启预览
-  borderRadius?: string;         // 圆角，默认 '5px'
-  lazy?: boolean;                // 是否懒加载，默认 true
-  scale?: number;                // 缩放比例
-  initialIndex?: number;         // 预览初始索引，默认 0
-  imageList?: string[]; // 补全这一行，通常图片列表是字符串数组
+  source?: string | File // 支持字符串（URL）或文件对象
+  width?: number // 宽度
+  fit?: string // 明确 fit 的可选值
+  preview?: boolean // 是否开启预览
+  borderRadius?: string // 圆角，默认 '5px'
+  lazy?: boolean // 是否懒加载，默认 true
+  scale?: number // 缩放比例
+  initialIndex?: number // 预览初始索引，默认 0
+  imageList?: string[] // 补全这一行，通常图片列表是字符串数组
 }
 
 // 2. 使用 withDefaults 定义默认值
@@ -46,9 +50,9 @@ const props = withDefaults(defineProps<Props>(), {
   lazy: true,
   initialIndex: 0,
   imageList: () => []
-});
+})
 
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue'
 
 // 假设 props 类型已定义
 // interface Props {
@@ -58,36 +62,36 @@ import { ref, computed } from 'vue';
 // }
 // const props = defineProps<Props>();
 
-const fileImage = ref<string | ArrayBuffer | null>(null);
+const fileImage = ref<string | ArrayBuffer | null>(null)
 
 const fileSource = computed(() => {
   if (!props.source) {
-    fileImage.value = null;
-    return null;
+    fileImage.value = null
+    return null
   }
 
   // 处理 File 对象（本地上传预览）
   if (props.source instanceof File) {
-    const img = new FileReader();
-    img.readAsDataURL(props.source);
+    const img = new FileReader()
+    img.readAsDataURL(props.source)
     img.onload = ({ target }) => {
       // 将读取到的 Base64 结果赋值给 fileImage
-      fileImage.value = target?.result ?? null;
-    };
-    return null; // File 对象时，实际渲染依赖 fileImage 变量
+      fileImage.value = target?.result ?? null
+    }
+    return null // File 对象时，实际渲染依赖 fileImage 变量
   }
 
   // 处理 字符串（网络链接）
   if (typeof props.source === 'string') {
-    return props.source;
+    return props.source
   }
 
-  return null;
-});
+  return null
+})
 
 const imageListResult = computed<string[]>(() => {
   if (!props.preview) {
-    return [];
+    return []
   }
 
   if (props.imageList) {
@@ -95,13 +99,13 @@ const imageListResult = computed<string[]>(() => {
     // 这里原代码逻辑不完整，通常是将 imageList 映射为地址数组
     const result = props.imageList.map((item) => {
       // 根据实际业务逻辑返回地址，目前暂返空对象映射
-      return '';
-    });
-    return [];
+      return ''
+    })
+    return []
   }
 
-  return [];
-});
+  return []
+})
 </script>
 
 <style scoped lang="scss">
@@ -134,7 +138,7 @@ const imageListResult = computed<string[]>(() => {
   }
 
   .icon-image-error {
-    margin: 0px auto;
+    margin: 0 auto;
     font-size: 20px;
     color: #838383;
     height: 100%;

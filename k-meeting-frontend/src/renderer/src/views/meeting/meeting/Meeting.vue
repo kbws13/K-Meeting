@@ -121,7 +121,7 @@ initEnv()
 const LAYOUT_CLASS = {
   0: 'layout-grid',
   1: 'layout-top',
-  2: 'layout-right',
+  2: 'layout-right'
 }
 
 const layoutType = ref(0)
@@ -132,8 +132,8 @@ const layoutChangeHandler = (type: number) => {
 const titlebarRef = ref()
 const closeMeeting = () => {
   proxy.Confirm({
-    message: "确定要退出会议吗？",
-    okfun:() => {
+    message: '确定要退出会议吗？',
+    okfun: () => {
       titlebarRef.value.custClose()
     }
   })
@@ -186,15 +186,15 @@ const selectMemberHandler = async ({ srcObject, userId, sex, nickName, openVideo
 }
 
 onMounted(() => {
-  mitter.on("layoutChange", layoutChangeHandler)
+  mitter.on('layoutChange', layoutChangeHandler)
   mitter.on('shareScreen', shareScreenHandler)
-  window.electron.ipcRenderer.on("preCloseWindow", () => {
+  window.electron.ipcRenderer.on('preCloseWindow', () => {
     closeMeeting()
   })
 })
 
 onUnmounted(() => {
-  mitter.off("layoutChange", layoutChangeHandler)
+  mitter.off('layoutChange', layoutChangeHandler)
   mitter.off('shareScreen', shareScreenHandler)
   window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
