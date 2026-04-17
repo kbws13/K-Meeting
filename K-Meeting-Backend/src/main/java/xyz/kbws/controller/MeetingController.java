@@ -194,15 +194,15 @@ public class MeetingController {
     @ApiOperation("邀请联系人参加会议")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/inviteMember")
-    public BaseResponse<Boolean> inviteMember(@CurrentUser LoginUser loginUser, @NotEmpty String contactIds) {
-        meetingService.inviteMember(loginUser, contactIds);
+    public BaseResponse<Boolean> inviteMember(@CurrentUser LoginUser loginUser, @RequestParam("selectContactIds") @NotEmpty String selectContactIds) {
+        meetingService.inviteMember(loginUser, selectContactIds);
         return ResultUtil.success(true);
     }
 
     @ApiOperation("接受邀请")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/accept")
-    public BaseResponse<Boolean> accept(@CurrentUser LoginUser loginUser, @NotNull Integer meetingId) {
+    public BaseResponse<Boolean> accept(@CurrentUser LoginUser loginUser, @NotNull @RequestParam("meetingId") Integer meetingId) {
         meetingService.acceptInvite(loginUser, meetingId);
         return ResultUtil.success(true);
     }
