@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  */
 public final class ChatMessageTableUtil {
 
-    public static final String BASE_TABLE_NAME = "chatMessage";
+    public static final String BASE_TABLE_NAME = "chat_message";
     public static final ZoneId TABLE_ZONE_ID = ZoneId.of("Asia/Shanghai");
 
     private static final String TABLE_PREFIX = BASE_TABLE_NAME + "_";

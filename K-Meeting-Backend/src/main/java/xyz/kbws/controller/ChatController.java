@@ -20,7 +20,6 @@ import xyz.kbws.model.enums.ReceiveTypeEnum;
 import xyz.kbws.model.query.ChatMessageQuery;
 import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.ChatMessageService;
-import xyz.kbws.utils.UserIdCodec;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
@@ -67,7 +66,9 @@ public class ChatController {
             chatMessage.setReceiveType(ReceiveTypeEnum.ALL.getValue());
         } else {
             chatMessage.setReceiveType(ReceiveTypeEnum.USER.getValue());
-            chatMessage.setReceiveUserId(UserIdCodec.decode(receiveUserId));
+            // TODO 这里暂时屏蔽混淆
+            // chatMessage.setReceiveUserId(UserIdCodec.decode(receiveUserId));
+            chatMessage.setReceiveUserId(Integer.parseInt(receiveUserId));
         }
         chatMessageService.saveChatMessage(chatMessage);
         return ResultUtil.success(true);

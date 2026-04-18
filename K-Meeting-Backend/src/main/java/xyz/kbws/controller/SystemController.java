@@ -4,7 +4,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import xyz.kbws.annotation.AuthCheck;
@@ -32,7 +31,7 @@ public class SystemController {
     private RedisComponent redisComponent;
     
     @ApiOperation("获取系统设置")
-    @GetMapping("/get")
+    @PostMapping("/get")
     @AuthCheck(mustRole = UserConstant.user)
     public BaseResponse<SystemSetting> getSetting() {
         SystemSetting systemSetting = redisComponent.getSystemSetting();

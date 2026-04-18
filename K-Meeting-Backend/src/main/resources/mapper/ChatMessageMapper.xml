@@ -6,25 +6,25 @@
 
     <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.ChatMessage">
         <id property="id" column="id"/>
-        <result property="meetingId" column="meetingId"/>
+        <result property="meetingId" column="meeting_id"/>
         <result property="type" column="type"/>
         <result property="content" column="content"/>
-        <result property="sendUserId" column="sendUserId"/>
-        <result property="sendUserNickName" column="sendUserNickName"/>
-        <result property="sendTime" column="sendTime"/>
-        <result property="receiveType" column="receiveType"/>
-        <result property="receiveUserId" column="receiveUserId"/>
-        <result property="fileSize" column="fileSize"/>
-        <result property="fileName" column="fileName"/>
-        <result property="fileType" column="fileType"/>
-        <result property="fileSuffix" column="fileSuffix"/>
+        <result property="sendUserId" column="send_user_id"/>
+        <result property="sendUserNickName" column="send_user_nick_name"/>
+        <result property="sendTime" column="send_time"/>
+        <result property="receiveType" column="receive_type"/>
+        <result property="receiveUserId" column="receive_user_id"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileType" column="file_type"/>
+        <result property="fileSuffix" column="file_suffix"/>
         <result property="status" column="status"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, meetingId, type, content, sendUserId, sendUserNickName,
-        sendTime, receiveType, receiveUserId, fileSize, fileName,
-        fileType, fileSuffix, status
+        id, meeting_id, type, content, send_user_id, send_user_nick_name,
+        send_time, receive_type, receive_user_id, file_size, file_name,
+        file_type, file_suffix, status
     </sql>
 
     <insert id="insertPartition">
@@ -74,18 +74,18 @@
 
     <update id="updatePartitionById">
         UPDATE `${tableName}`
-        SET meetingId = #{entity.meetingId},
+        SET meeting_id = #{entity.meetingId},
             type = #{entity.type},
             content = #{entity.content},
-            sendUserId = #{entity.sendUserId},
-            sendUserNickName = #{entity.sendUserNickName},
-            sendTime = #{entity.sendTime},
-            receiveType = #{entity.receiveType},
-            receiveUserId = #{entity.receiveUserId},
-            fileSize = #{entity.fileSize},
-            fileName = #{entity.fileName},
-            fileType = #{entity.fileType},
-            fileSuffix = #{entity.fileSuffix},
+            send_user_id = #{entity.sendUserId},
+            send_user_nick_name = #{entity.sendUserNickName},
+            send_time = #{entity.sendTime},
+            receive_type = #{entity.receiveType},
+            receive_user_id = #{entity.receiveUserId},
+            file_size = #{entity.fileSize},
+            file_name = #{entity.fileName},
+            file_type = #{entity.fileType},
+            file_suffix = #{entity.fileSuffix},
             status = #{entity.status}
         WHERE id = #{entity.id}
     </update>
@@ -96,12 +96,12 @@
     </delete>
 
     <sql id="PrivateHistoryWhereClause">
-        WHERE meetingId = #{meetingId}
-        AND receiveType = #{receiveType}
+        WHERE meeting_id = #{meetingId}
+        AND receive_type = #{receiveType}
         AND (
-        (sendUserId = #{currentUserId} AND receiveUserId = #{targetUserId})
+        (send_user_id = #{currentUserId} AND receive_user_id = #{targetUserId})
         OR
-        (sendUserId = #{targetUserId} AND receiveUserId = #{currentUserId})
+        (send_user_id = #{targetUserId} AND receive_user_id = #{currentUserId})
         )
         <if test="maxMessageId != null">
             AND id <![CDATA[ < ]]> #{maxMessageId}
@@ -119,7 +119,7 @@
             <include refid="PrivateHistoryWhereClause"/>
         </foreach>
         ) history
-        ORDER BY sendTime DESC, id DESC
+        ORDER BY send_time DESC, id DESC
         LIMIT #{offset}, #{limit}
     </select>
 
@@ -142,17 +142,17 @@
             FROM `${tableName}`
             WHERE meetingId = #{meetingId}
             <if test="startSendTime != null">
-                AND sendTime <![CDATA[ >= ]]> #{startSendTime}
+                AND send_time <![CDATA[ >= ]]> #{startSendTime}
             </if>
             <if test="endSendTime != null">
-                AND sendTime <![CDATA[ <= ]]> #{endSendTime}
+                AND send_time <![CDATA[ <= ]]> #{endSendTime}
             </if>
             <if test="beforeSendTime != null">
-                AND sendTime <![CDATA[ < ]]> #{beforeSendTime}
+                AND send_time <![CDATA[ < ]]> #{beforeSendTime}
             </if>
         </foreach>
         ) history
-        ORDER BY sendTime DESC, id DESC
+        ORDER BY send_time DESC, id DESC
         LIMIT #{limit}
     </select>
 
@@ -170,19 +170,19 @@
 
     <select id="listExpiredMessagesFromHotTable" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM chatMessage
-        WHERE sendTime <![CDATA[ < ]]> #{cutoffSendTime}
-        ORDER BY sendTime ASC, id ASC
+        FROM chat_message
+        WHERE send_time <![CDATA[ < ]]> #{cutoffSendTime}
+        ORDER BY send_time ASC, id ASC
     </select>
 
     <select id="countExpiredMessagesInHotTable" resultType="java.lang.Long">
         SELECT COUNT(1)
-        FROM chatMessage
-        WHERE sendTime <![CDATA[ < ]]> #{cutoffSendTime}
+        FROM chat_message
+        WHERE send_time <![CDATA[ < ]]> #{cutoffSendTime}
     </select>
 
     <delete id="deleteHotMessagesByIds">
-        DELETE FROM chatMessage
+        DELETE FROM chat_message
         WHERE id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}

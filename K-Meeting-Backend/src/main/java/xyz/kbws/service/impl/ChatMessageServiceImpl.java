@@ -279,8 +279,9 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
         if (!ArrayUtil.contains(new Integer[]{MessageTypeEnum.CHAT_TEXT_MESSAGE.getValue(), MessageTypeEnum.CHAT_MEDIA_MESSAGE.getValue()}, chatMessage.getType())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        ReceiveTypeEnum receiveTypeEnum = ReceiveTypeEnum.getByValue(chatMessage.getReceiveType());
-        if (receiveTypeEnum == null) {
+        // TODO 前端实际上是通过 receiveUserId == 0 去处理所有人的
+        // ReceiveTypeEnum receiveTypeEnum = ReceiveTypeEnum.getByValue(chatMessage.getReceiveType());
+        ReceiveTypeEnum receiveTypeEnum = chatMessage.getReceiveUserId() == 0 ? ReceiveTypeEnum.ALL : ReceiveTypeEnum.USER;        if (receiveTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         if (receiveTypeEnum == ReceiveTypeEnum.USER && chatMessage.getReceiveUserId() == null) {
@@ -304,6 +305,9 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存聊天消息失败");
         }
         MessageSendDto messageSendDto = BeanUtil.copyProperties(chatMessage, MessageSendDto.class);
+        messageSendDto.setMessageContent(chatMessage.getContent());
+        // TODO 这里暂时设置消息类型为7
+        messageSendDto.setMessageType(MessageTypeEnum.CHAT_MEDIA_MESSAGE_UPDATE.getValue());
         if (ReceiveTypeEnum.USER == receiveTypeEnum) {
             messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
             messageHandler.sendMessage(messageSendDto);
