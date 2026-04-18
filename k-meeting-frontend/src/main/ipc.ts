@@ -3,13 +3,14 @@ import {
   desktopCapturer,
   dialog,
   ipcMain,
-  shell,
   type OpenDialogOptions,
+  shell,
   type SourcesOptions
 } from 'electron'
 import icon from '../../resources/icon.png?asset'
-import type {
+import {
   ChangeLocalFolderPayload,
+  DownloadUpdatePayload,
   LoginSuccessPayload,
   OpenLocalFilePayload,
   OpenWindowPayload,
@@ -21,13 +22,14 @@ import type {
 } from '@model/ipc'
 import type { SysSetting } from '@model/system'
 import type { PersistedUserInfo } from '@model/user'
-import { delWindow, getWindow, saveWindow, type ManagedBrowserWindow } from './windowProxy'
+import { delWindow, getWindow, type ManagedBrowserWindow, saveWindow } from './windowProxy'
 import { initWs, logout, sendWsData } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
 import { getSysSetting, saveSysSetting } from './sysSetting'
 import { is } from '@electron-toolkit/utils'
 import { join } from 'path'
+import { downloadUpdate } from './appUpdate'
 
 const getMainWindow = (): ManagedBrowserWindow | undefined => {
   return getWindow('main')
@@ -314,6 +316,12 @@ const onSendPeerConnection = (): void => {
   })
 }
 
+const onDownloadUpdate = () => {
+  ipcMain.on('downloadUpdate', (_event, { id, downloadUrl, fileName }: DownloadUpdatePayload) => {
+    downloadUpdate({ id, downloadUrl, fileName })
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -327,5 +335,6 @@ export {
   onChangeLocalFolder,
   onLogout,
   onOpenWindow,
-  onSendPeerConnection
+  onSendPeerConnection,
+  onDownloadUpdate
 }

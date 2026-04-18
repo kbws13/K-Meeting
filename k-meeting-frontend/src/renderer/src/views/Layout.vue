@@ -47,6 +47,7 @@
     </div>
   </div>
   <UpdateUser ref="updateUserRef" @reloadInfo="reloadInfoHandler"></UpdateUser>
+  <AppUpdate />
 </template>
 
 <script setup lang="ts">
@@ -60,6 +61,7 @@ import { mitter } from '../eventbus/eventBus'
 import Avatar from '../components/Avatar.vue'
 import UpdateUser from './UpdateUser.vue'
 import { useMeetingStore } from '../stores/MeetingStore'
+import AppUpdate from '@/views/AppUpdate.vue'
 
 const proxy = useAppProxy()
 const route = useRoute()
