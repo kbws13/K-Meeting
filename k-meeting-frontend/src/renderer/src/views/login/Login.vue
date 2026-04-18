@@ -89,15 +89,16 @@
 </template>
 
 <script setup lang="ts">
-import { type ComponentInternalInstance, getCurrentInstance, nextTick, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { FormInstance } from 'element-plus'
-import md5 from 'js-md5'
+import { md5 } from 'js-md5'
+import type { PersistedUserInfo } from '@model/user'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
+import { useAppProxy } from '@/composables/useAppProxy'
 
 const userInfoStore = useUserInfoStore()
-
-const { proxy } = getCurrentInstance() as ComponentInternalInstance
+const proxy = useAppProxy()
 const router = useRouter()
 
 /** 验证码响应数据结构 */
@@ -107,7 +108,7 @@ interface CheckCodeResponse {
 }
 
 /** 登录/注册请求参数 */
-interface AuthParams {
+interface AuthParams extends Record<string, unknown> {
   email: string
   password: string
   checkCode: string
@@ -115,16 +116,18 @@ interface AuthParams {
   checkCodeKey: string | null
 }
 
+type VerifyMethod = 'checkEmail' | 'checkPassword'
+
 const checkCodeUrl = ref<string>('')
 
 /**
  * 刷新/获取验证码
  */
 const changeCheckCode = async (): Promise<void> => {
-  const result = (await (proxy as any).Request({
-    url: (proxy as any).Api.checkCode,
+  const result = await proxy.Request<CheckCodeResponse>({
+    url: proxy.Api.checkCode,
     method: 'get'
-  })) as { data: CheckCodeResponse } | null
+  })
   if (!result) {
     return
   }
@@ -163,16 +166,26 @@ const cleanVerify = (): void => {
  * @param value 待校验的值
  * @param msg   校验失败时的提示信息
  */
-const checkValue = (type: string | null, value: string | undefined, msg: string): boolean => {
-  if ((proxy as any).Utils.isEmpty(value)) {
+const checkValue = (type: VerifyMethod | null, value: string | undefined, msg: string): boolean => {
+  if (proxy.Utils.isEmpty(value)) {
     errorMsg.value = msg
     return false
   }
-  if (type && !(proxy as any).Verify[type](value)) {
+  if (type && !proxy.Verify[type](value)) {
     errorMsg.value = msg
     return false
   }
   return true
+}
+
+const buildAuthParams = (): AuthParams => {
+  return {
+    email: formData.value.email,
+    password: isLogin.value ? md5(formData.value.password) : formData.value.password,
+    checkCode: formData.value.checkCode,
+    nickName: formData.value.nickName,
+    checkCodeKey: localStorage.getItem('checkCodeKey')
+  } as AuthParams
 }
 
 const submit = async (): Promise<void> => {
@@ -202,34 +215,22 @@ const submit = async (): Promise<void> => {
     showLoading.value = true
   }
 
-  // 登录/注册逻辑处理
-  // 注册接口后端使用 @RequestBody，需以 JSON 格式发送；登录接口同理
-  const result = await (proxy as any).Request({
-    url: isLogin.value ? (proxy as any).Api.login : (proxy as any).Api.register,
-    dataType: 'json',
-    showError: false,
-    showLoading: false,
-    params: {
-      email: formData.value.email,
-      password: isLogin.value ? md5(formData.value.password) : formData.value.password,
-      checkCode: formData.value.checkCode,
-      nickName: formData.value.nickName,
-      checkCodeKey: localStorage.getItem('checkCodeKey')
-    } as AuthParams,
-    errorCallback: (response: { message: string }) => {
-      showLoading.value = false
-      changeCheckCode()
-      errorMsg.value = response.message
-    }
-  })
-
-  // 如果请求失败（result 为空），中断后续执行
-  if (!result) {
-    return
-  }
-
-  // 成功处理逻辑
   if (isLogin.value) {
+    const result = await proxy.Request<PersistedUserInfo>({
+      url: proxy.Api.login,
+      dataType: 'json',
+      showError: false,
+      showLoading: false,
+      params: buildAuthParams(),
+      errorCallback: (response: { message: string }) => {
+        showLoading.value = false
+        changeCheckCode()
+        errorMsg.value = response.message
+      }
+    })
+    if (!result) {
+      return
+    }
     await window.electron.ipcRenderer.invoke('loginSuccess', {
       userInfo: result.data,
       wsUrl: import.meta.env.VITE_WS
@@ -237,8 +238,22 @@ const submit = async (): Promise<void> => {
     userInfoStore.setInfo(result.data)
     await router.push('/home')
   } else {
-    // 注册成功提示并切换操作类型（通常是切回登录界面）
-    ;(proxy as any).Message.success('注册成功')
+    const result = await proxy.Request<boolean>({
+      url: proxy.Api.register,
+      dataType: 'json',
+      showError: false,
+      showLoading: false,
+      params: buildAuthParams(),
+      errorCallback: (response: { message: string }) => {
+        showLoading.value = false
+        changeCheckCode()
+        errorMsg.value = response.message
+      }
+    })
+    if (!result) {
+      return
+    }
+    proxy.Message.success('注册成功')
     await changeOptype()
   }
 }

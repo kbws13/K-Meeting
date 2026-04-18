@@ -72,7 +72,7 @@ const formData = ref<SysSetting>({
 })
 
 const getSysSetting = async (): Promise<void> => {
-  const sysSetting = await window.electron.ipcRenderer.invoke<Partial<SysSetting>>('getSysSetting')
+  const sysSetting = await window.electron.ipcRenderer.invoke('getSysSetting')
   formData.value = {
     ...formData.value,
     ...sysSetting

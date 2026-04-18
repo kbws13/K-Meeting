@@ -1,4 +1,5 @@
 export * from './auth'
+export * from './channels'
 export * from './media'
 export * from './meeting'
 export * from './system'

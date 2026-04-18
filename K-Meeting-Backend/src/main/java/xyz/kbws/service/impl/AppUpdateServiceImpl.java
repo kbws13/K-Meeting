@@ -61,11 +61,12 @@ public class AppUpdateServiceImpl extends ServiceImpl<AppUpdateMapper, AppUpdate
         if (StrUtil.isBlank(version)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "版本号不能为空");
         }
-        if (fileType == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型不能为空");
-        }
+        //if (fileType == null) {
+        //    throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型不能为空");
+        //}
         LambdaQueryWrapper<AppUpdate> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AppUpdate::getFileType, fileType)
+        queryWrapper
+                //.eq(AppUpdate::getFileType, fileType)
                 .eq(AppUpdate::getStatus, AppUpdateStatusEnum.ENABLE.getValue())
                 .orderByDesc(AppUpdate::getCreateTime);
         List<AppUpdate> appUpdateList = this.list(queryWrapper);

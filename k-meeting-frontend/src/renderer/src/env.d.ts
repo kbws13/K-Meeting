@@ -1,7 +1,9 @@
 /// <reference types="vite/client" />
+/// <reference path="./types/electron.d.ts" />
 
 interface ImportMetaEnv {
   readonly VITE_DOMAIN?: string
+  readonly VITE_WS?: string
 }
 
 declare module '*.vue' {

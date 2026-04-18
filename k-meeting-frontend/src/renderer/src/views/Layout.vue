@@ -50,8 +50,10 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { RealtimeMessage } from '@model/ipc'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAppProxy } from '@/composables/useAppProxy'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '../stores/UserContactStore'
 import { mitter } from '../eventbus/eventBus'
@@ -59,7 +61,7 @@ import Avatar from '../components/Avatar.vue'
 import UpdateUser from './UpdateUser.vue'
 import { useMeetingStore } from '../stores/MeetingStore'
 
-const { proxy } = getCurrentInstance() as any
+const proxy = useAppProxy()
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -124,15 +126,15 @@ const leftBottomMenus: MenuItem[] = [
   }
 ]
 
-const jumpMenu = (item: MenuItem) => {
-  if (item.btnType === 'admin') {
+const jumpMenu = (item: MenuItem): void => {
+  if (item.btnType === 'admin' || !item.path) {
     return
   }
-  router.push(item.path)
+  void router.push(item.path)
 }
 
-const listenMessage = () => {
-  window.electron.ipcRenderer.on('mainMessage', (e, messageObj) => {
+const listenMessage = (): void => {
+  window.electron.ipcRenderer.on('mainMessage', (_event, messageObj: RealtimeMessage) => {
     console.log('收到消息', messageObj)
     switch (messageObj.messageType) {
       case 1: // 加入会议
@@ -199,8 +201,8 @@ const listenMessage = () => {
   })
 }
 
-const loadContactApplyCount = async () => {
-  let result = await proxy.Request({
+const loadContactApplyCount = async (): Promise<void> => {
+  const result = await proxy.Request<number>({
     url: proxy.Api.loadContactApplyDealWithCount
   })
   if (!result) {
@@ -209,24 +211,24 @@ const loadContactApplyCount = async () => {
   leftTopMenus.value[1].messageCount = result.data
 }
 
-const updateUserRef = ref()
-const showUserInfo = () => {
-  updateUserRef.value.show()
+const updateUserRef = ref<{ show: () => void } | null>(null)
+const showUserInfo = (): void => {
+  updateUserRef.value?.show()
 }
 
-const avatarRef = ref()
-const reloadInfoHandler = (data) => {
+const avatarRef = ref<{ updateAvatarUrl: () => void } | null>(null)
+const reloadInfoHandler = (data): void => {
   userInfoStore.setInfo(data)
-  avatarRef.value.updateAvatarUrl()
+  avatarRef.value?.updateAvatarUrl()
 }
 
 /**
  * 接受会议邀请
  * @param {string} meetingId 会议ID
  */
-const acceptInvite = async (meetingId) => {
+const acceptInvite = async (meetingId: string | number): Promise<void> => {
   // 1. 调用后端接口，确认接受邀请
-  let result = await proxy.Request({
+  const result = await proxy.Request({
     url: proxy.Api.acceptInvite,
     params: {
       meetingId
@@ -251,7 +253,7 @@ const acceptInvite = async (meetingId) => {
 
 watch(
   () => contactStore.lastUpdateTime,
-  (newVal, oldVal) => {
+  (newVal) => {
     if (!newVal) {
       return
     }

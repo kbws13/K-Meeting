@@ -42,11 +42,12 @@
 </template>
 
 <script setup lang="ts">
-import { ComponentInternalInstance, getCurrentInstance, nextTick, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FormInstance, FormRules } from 'element-plus'
+import { useAppProxy } from '@/composables/useAppProxy'
 
-const { proxy } = getCurrentInstance() as ComponentInternalInstance & { proxy: any }
+const proxy = useAppProxy()
 const router = useRouter()
 
 interface DialogConfig {
@@ -57,6 +58,12 @@ interface DialogConfig {
     text: string
     click: (e?: MouseEvent) => void
   }>
+}
+
+interface UpdatePasswordForm {
+  oldPassword: string
+  password: string
+  rePassword: string
 }
 
 const dialogConfig = ref<DialogConfig>({
@@ -73,7 +80,11 @@ const dialogConfig = ref<DialogConfig>({
   ]
 })
 
-const formData = ref<any>({})
+const formData = ref<UpdatePasswordForm>({
+  oldPassword: '',
+  password: '',
+  rePassword: ''
+})
 const formDataRef = ref<FormInstance>()
 
 const rules: FormRules = {
@@ -85,7 +96,7 @@ const rules: FormRules = {
   rePassword: [
     { required: true, message: '请再次输入新密码' },
     {
-      validator: (_rule: any, value: any, callback: any) => {
+      validator: (_rule: unknown, value: string, callback: (error?: Error) => void): void => {
         if (value !== formData.value.password) {
           callback(new Error('两次输入的密码不一致'))
         } else {
@@ -96,7 +107,7 @@ const rules: FormRules = {
   ]
 }
 
-const submitForm = () => {
+const submitForm = (): void => {
   formDataRef.value?.validate(async (valid) => {
     if (!valid) {
       return
@@ -119,7 +130,7 @@ const submitForm = () => {
   })
 }
 
-const show = async () => {
+const show = async (): Promise<void> => {
   dialogConfig.value.show = true
   await nextTick()
   formDataRef.value?.resetFields()

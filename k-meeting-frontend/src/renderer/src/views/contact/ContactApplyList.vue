@@ -22,11 +22,13 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance, ref, watch } from 'vue'
+import type { PageResult } from '@model/common'
+import { ref, watch } from 'vue'
+import { useAppProxy } from '@/composables/useAppProxy'
 import { useContactStore } from '../../stores/UserContactStore'
 import { mitter } from '../../eventbus/eventBus'
 
-const { proxy } = getCurrentInstance() as any
+const proxy = useAppProxy()
 const contactStore = useContactStore()
 
 interface ContactApply {
@@ -49,8 +51,8 @@ interface ContactApply {
 
 const contactApplyList = ref<ContactApply[]>([])
 /* 加载联系人申请列表 */
-const loadContactApplyList = async () => {
-  let result = await proxy.Request({
+const loadContactApplyList = async (): Promise<void> => {
+  const result = await proxy.Request<PageResult<ContactApply>>({
     url: proxy.Api.loadContactApply,
     dataType: 'json',
     params: {}
@@ -63,8 +65,8 @@ const loadContactApplyList = async () => {
 }
 loadContactApplyList()
 
-const dealWithApply = async (applyUserId: number | string, status: number) => {
-  let result = await proxy.Request({
+const dealWithApply = async (applyUserId: number | string, status: number): Promise<void> => {
+  const result = await proxy.Request({
     url: proxy.Api.dealWithApply,
     params: {
       applyUserId,

@@ -98,7 +98,7 @@ const initEnv = async () => {
   const defaultMic = devices.find((device) => device.kind == 'audioinput')
 
   // 2. 通过 IPC 从 Electron 主进程获取系统设置
-  const sysSetting = await window.electron.ipcRenderer.invoke<SysSetting>('getSysSetting')
+  const sysSetting = await window.electron.ipcRenderer.invoke('getSysSetting')
 
   // 3. 尝试获取摄像头媒体流以检测摄像头可用性
   const stream = await navigator.mediaDevices

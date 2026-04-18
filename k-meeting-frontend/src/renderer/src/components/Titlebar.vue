@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import type { WindowAction, WindowCloseData } from '@model/ipc'
 import { onMounted, ref } from 'vue'
 
 interface Props {
@@ -39,7 +40,7 @@ interface Props {
   showMax?: boolean
   showClose?: boolean
   /** 0: 关闭, 1: 隐藏 */
-  closeType?: number
+  closeType?: 0 | 1
   styleTop?: number
   styleRight?: number
   borderRadius?: number
@@ -58,21 +59,21 @@ const props = withDefaults(defineProps<Props>(), {
   forceClose: true
 })
 
-const isMax = ref<Boolean>(false)
+const isMax = ref(false)
 
-const winOp = (action, data) => {
+const winOp = (action: WindowAction, data?: WindowCloseData): void => {
   window.electron.ipcRenderer.send('winTitleOp', { action, data })
 }
-const close = () => {
+const close = (): void => {
   winOp('close', { closeType: props.closeType, forceClose: props.forceClose })
 }
-const custClose = () => {
+const custClose = (): void => {
   winOp('close', { closeType: props.closeType, forceClose: true })
 }
-const minimize = () => {
+const minimize = (): void => {
   winOp('minimize')
 }
-const maximize = () => {
+const maximize = (): void => {
   if (isMax.value) {
     winOp('unmaximize')
   } else {
