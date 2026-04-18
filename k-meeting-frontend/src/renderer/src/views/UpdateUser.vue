@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -7,25 +7,14 @@
     :showCancel="false"
     @close="dialogConfig.show = false"
   >
-    <el-form
-      :model="formData"
-      :rules="rules"
-      ref="formDataRef"
-      label-width="80px"
-      @submit.prevent
-    >
+    <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
       <el-form-item label="UID">
         {{ formData.userId }}
       </el-form-item>
 
       <el-form-item label="头像" prop="">
         <div class="avatar-upload">
-          <Cover
-            :width="80"
-            :scale="1"
-            :source="formData.avatar"
-            defaultImg="user.png"
-          ></Cover>
+          <Cover :width="80" :scale="1" :source="formData.avatar" defaultImg="user.png"></Cover>
           <el-upload
             :multiple="false"
             :show-file-list="false"
@@ -38,11 +27,7 @@
       </el-form-item>
 
       <el-form-item label="昵称" prop="nickName">
-        <el-input
-          clearable
-          placeholder="请输入昵称"
-          v-model.trim="formData.nickName"
-        ></el-input>
+        <el-input clearable placeholder="请输入昵称" v-model.trim="formData.nickName"></el-input>
       </el-form-item>
 
       <el-form-item label="性别" prop="sex">
@@ -53,7 +38,7 @@
         </el-radio-group>
       </el-form-item>
     </el-form>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">

@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -49,7 +49,7 @@
         ></el-input>
       </el-form-item>
     </el-form>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">

@@ -19,11 +19,15 @@
         <div
           :class="[
             'iconfont',
-            props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen ? 'icon-video2' : 'icon-video2-close'
+            props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen
+              ? 'icon-video2'
+              : 'icon-video2-close'
           ]"
         ></div>
         <div class="name">
-          {{ props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen ? '关闭视频' : '开启视频' }}
+          {{
+            props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen ? '关闭视频' : '开启视频'
+          }}
         </div>
       </div>
 

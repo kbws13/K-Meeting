@@ -2,7 +2,7 @@
   <div class="header">
     <div class="left">会议详情</div>
     <div class="right">
-      <el-popover placement="top-end" :width="260" trigger="click" ref="layoutPopoverRef">
+      <el-popover ref="layoutPopoverRef" placement="top-end" :width="260" trigger="click">
         <template #reference>
           <div class="layout-btn">
             <div :class="['cur-layout-icon iconfont', 'icon-' + currentLayout.icon]"></div>
@@ -12,7 +12,12 @@
         </template>
 
         <div class="layout">
-          <div class="layout-item" v-for="item in layoutList" @click="selectLayout(item)">
+          <div
+            v-for="item in layoutList"
+            :key="item.type"
+            class="layout-item"
+            @click="selectLayout(item)"
+          >
             <div
               :class="[
                 'iconfont',

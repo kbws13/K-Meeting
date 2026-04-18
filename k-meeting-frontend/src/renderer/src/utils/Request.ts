@@ -1,13 +1,18 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosInstance,
+  type AxiosProgressEvent,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig
+} from 'axios'
 import { ElLoading } from 'element-plus'
-// @ts-ignore
 import Message from '../utils/Message'
 import router from '@/router'
 
 /**
  * 接口返回的基础数据结构
  */
-interface ResponseData<T = any> {
+interface ResponseData<T = unknown> {
   code: number
   message: string
   data: T
@@ -28,36 +33,24 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
 interface RequestParams {
   url: string
   method?: 'get' | 'post'
-  params?: Record<string, any>
+  params?: Record<string, unknown>
   dataType?: 'json' | string
   showLoading?: boolean
   responseType?: 'json' | 'blob' | 'arraybuffer'
   showError?: boolean
   errorCallback?: (responseData: ResponseData) => void
-  uploadProgressCallback?: (event: any) => void
-}
-
-// 声明全局 window.electron 避免编译错误
-declare global {
-  interface Window {
-    electron: {
-      ipcRenderer: {
-        invoke(channel: string, ...args: any[]): Promise<any>
-      }
-    }
-  }
+  uploadProgressCallback?: (event: AxiosProgressEvent) => void
 }
 
 const contentTypeForm = 'application/x-www-form-urlencoded;charset=UTF-8'
 const contentTypeJson = 'application/json'
 const responseTypeJson = 'json'
 
-let loading: any = null
+let loading: ReturnType<typeof ElLoading.service> | null = null
 
 const instance: AxiosInstance = axios.create({
   withCredentials: true,
-  // @ts-ignore
-  baseURL: (import.meta.env.PROD ? import.meta.env.VITE_DOMAIN : '') + '/api',
+  baseURL: `${import.meta.env.PROD ? (import.meta.env.VITE_DOMAIN ?? '') : ''}/api`,
   timeout: 10 * 1000
 })
 
@@ -128,7 +121,7 @@ instance.interceptors.response.use(
 /**
  * 封装的请求函数
  */
-const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null> => {
+const request = <T = unknown>(config: RequestParams): Promise<ResponseData<T> | null> => {
   const {
     url,
     method = 'post',
@@ -144,7 +137,7 @@ const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null
   const contentType = isJson ? contentTypeJson : contentTypeForm
 
   // JSON 模式直接传原始对象；表单模式使用 FormData
-  let requestBody: FormData | Record<string, any> | undefined
+  let requestBody: FormData | Record<string, unknown> | undefined
   if (requestMethod !== 'get') {
     if (isJson) {
       requestBody = params
@@ -152,14 +145,15 @@ const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null
       const formData = new FormData()
       if (params) {
         for (const key in params) {
-          formData.append(key, params[key] === undefined ? '' : params[key])
+          const value = params[key]
+          formData.append(key, value == null ? '' : value instanceof Blob ? value : String(value))
         }
       }
       requestBody = formData
     }
   }
 
-  let userInfoJson = localStorage.getItem('userInfo')
+  const userInfoJson = localStorage.getItem('userInfo')
   const token = userInfoJson ? JSON.parse(userInfoJson).token : ''
 
   const headers: Record<string, string> = {
@@ -180,27 +174,24 @@ const request = <T = any>(config: RequestParams): Promise<ResponseData<T> | null
               config.uploadProgressCallback(event)
             }
           },
-    responseType: responseType as any,
+    responseType: responseType as AxiosRequestConfig['responseType'],
     headers: headers,
-    // 以下是传给拦截器的自定义配置
-    // @ts-ignore (Axios 原生配置中没有这些属性，需要通过类型断言或强制转换传递)
     showLoading: showLoading,
     errorCallback: config.errorCallback,
     showError: showError
-  } as AxiosRequestConfig
+  } as AxiosRequestConfig & CustomRequestConfig
 
   const requestPromise: Promise<ResponseData<T>> =
     requestMethod === 'get'
       ? (instance.get(url, requestConfig) as Promise<ResponseData<T>>)
       : (instance.post(url, requestBody, requestConfig) as Promise<ResponseData<T>>)
 
-  return requestPromise
-    .catch((error) => {
-      if (error.showError) {
-        Message.error(error.msg)
-      }
-      return null
-    })
+  return requestPromise.catch((error: { showError?: boolean; msg?: string }) => {
+    if (error.showError) {
+      Message.error(error.msg ?? '请求失败')
+    }
+    return null
+  })
 }
 
 export default request

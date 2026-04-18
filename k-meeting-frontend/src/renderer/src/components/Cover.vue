@@ -17,18 +17,16 @@
       :initial-index="initialIndex"
     >
       <template #error>
-        <img
-          src="../assets/404.png"
-          class="el-image__inner"
-          :style="{ 'object-fit': fit }"
-          alt="404"
-        />
+        <img :src="errorImage" class="el-image__inner" :style="errorImageStyle" alt="404" />
       </template>
     </el-image>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, type CSSProperties } from 'vue'
+import errorImage from '../assets/images/404.png'
+
 // 1. 定义 Props 接口
 interface Props {
   source?: string | File // 支持字符串（URL）或文件对象
@@ -52,17 +50,10 @@ const props = withDefaults(defineProps<Props>(), {
   imageList: () => []
 })
 
-import { computed, ref } from 'vue'
-
-// 假设 props 类型已定义
-// interface Props {
-//   source?: string | File;
-//   preview?: boolean;
-//   imageList?: any[];
-// }
-// const props = defineProps<Props>();
-
 const fileImage = ref<string | ArrayBuffer | null>(null)
+const errorImageStyle = computed<CSSProperties>(() => ({
+  objectFit: props.fit
+}))
 
 const fileSource = computed(() => {
   if (!props.source) {
@@ -94,17 +85,12 @@ const imageListResult = computed<string[]>(() => {
     return []
   }
 
-  if (props.imageList) {
-    // TODO: 聊天图片预览逻辑
-    // 这里原代码逻辑不完整，通常是将 imageList 映射为地址数组
-    const result = props.imageList.map((item) => {
-      // 根据实际业务逻辑返回地址，目前暂返空对象映射
-      return ''
-    })
-    return []
+  if (props.imageList.length > 0) {
+    return props.imageList
   }
 
-  return []
+  const currentImage = typeof fileSource.value === 'string' ? fileSource.value : fileImage.value
+  return currentImage ? [String(currentImage)] : []
 })
 </script>
 

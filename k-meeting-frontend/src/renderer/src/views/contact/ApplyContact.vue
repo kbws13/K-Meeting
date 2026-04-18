@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -32,7 +32,7 @@
       </div>
     </div>
     <NoData v-if="userInfo == null" msg="用户不存在"></NoData>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">

@@ -1,6 +1,7 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
   "include": [
+    "src/model/**/*",
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.vue",
@@ -9,7 +10,14 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowImportingTsExtensions": true,
     "paths": {
+      "@model/*": [
+        "src/model/*"
+      ],
       "@/*": [
         "src/renderer/src/*"
       ],
@@ -17,5 +25,8 @@
         "src/renderer/src/*"
       ]
     }
+  },
+  "vueCompilerOptions": {
+    "strictTemplates": false
   }
 }

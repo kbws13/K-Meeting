@@ -17,7 +17,8 @@
         )
       "
     >
-      <div class="video-panel"
+      <div
+        class="video-panel"
         v-show="
           (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
           !proxy.Utils.isEmpty(screenId)
@@ -105,13 +106,13 @@ const layoutType = ref(0)
 const LIST_MAP = {
   0: 'member-list',
   1: 'member-list-top',
-  2: 'member-list-right',
+  2: 'member-list-right'
 }
 
 const LAYOUT_MAP = {
   0: 'member-item',
   1: 'member-item-top',
-  2: 'member-item-right',
+  2: 'member-item-right'
 }
 
 const memberList = ref([])
@@ -185,8 +186,6 @@ let cameraStream = null
 let screenStream = null
 let localStream = null
 
-
-
 /**
  * 核心：初始化本地合成流 (Main logic)
  */
@@ -212,9 +211,9 @@ const initLocalStream = async () => {
 
   // 没有摄像头，也不是共享屏幕，添加空的视频轨道占位
   if (!props.deviceInfo.cameraEnable && !screenId.value) {
-    const videoTrack = createEmptyVideoTrack();
-    videoTrack.enabled = false;
-    localStream.addTrack(videoTrack);
+    const videoTrack = createEmptyVideoTrack()
+    videoTrack.enabled = false
+    localStream.addTrack(videoTrack)
   }
 
   // 屏幕共享逻辑处理
@@ -246,7 +245,7 @@ const initLocalStream = async () => {
   // 加入会议
   joinMeeting(
     (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
-    !proxy.Utils.isEmpty(screenId.value)
+      !proxy.Utils.isEmpty(screenId.value)
   )
 }
 
@@ -300,9 +299,9 @@ const initLocalScreenStream = async () => {
       .catch((error) => {
         console.error(error)
       })
-    screenStream = stream;
+    screenStream = stream
     resolve(stream)
-    return;
+    return
   })
 }
 
@@ -341,9 +340,9 @@ const createPeerConnection = (member) => {
   // 初始化 RTCPeerConnection 配置
   peerConnection = new RTCPeerConnection({
     sdpSemantics: 'unified-plan', // 明确使用现代标准
-    codecs: { video: 'VP8' },      // 强制优先使用 VP8
-    bundlePolicy: 'balanced',      // 优化媒体传输通道的绑定策略
-    rtcpMuxPolicy: 'require',      // 强制 RTP/RTCP 多路复用
+    codecs: { video: 'VP8' }, // 强制优先使用 VP8
+    bundlePolicy: 'balanced', // 优化媒体传输通道的绑定策略
+    rtcpMuxPolicy: 'require', // 强制 RTP/RTCP 多路复用
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
   })
 
@@ -363,17 +362,21 @@ const createPeerConnection = (member) => {
 
   // Debug：监听链接状态
   peerConnection.onconnectionstatechange = () => {
-    console.log(`[WebRTC - ${member.userId}] Connection State 改变: ${peerConnection.connectionState}`);
+    console.log(
+      `[WebRTC - ${member.userId}] Connection State 改变: ${peerConnection.connectionState}`
+    )
   }
 
   peerConnection.oniceconnectionstatechange = () => {
-    console.log(`[WebRTC - ${member.userId}] ICE Connection State 改变: ${peerConnection.iceConnectionState}`);
+    console.log(
+      `[WebRTC - ${member.userId}] ICE Connection State 改变: ${peerConnection.iceConnectionState}`
+    )
   }
 
   // 2. 监听 ICE 候选者（Candidate）
   peerConnection.onicecandidate = (e) => {
     if (e.candidate) {
-      console.log(`[WebRTC - ${member.userId}] 发现本机 Candidate，准备发送`, e.candidate.candidate);
+      console.log(`[WebRTC - ${member.userId}] 发现本机 Candidate，准备发送`, e.candidate.candidate)
       sendPeerMessage({
         sendUserId: userInfoStore.userInfo.userId,
         signalType: SIGNAL_TYPE_CANDIDATE,
@@ -381,32 +384,34 @@ const createPeerConnection = (member) => {
         receiveUserId: member.userId
       })
     } else {
-      console.log(`[WebRTC - ${member.userId}] ICE 收集完成`);
+      console.log(`[WebRTC - ${member.userId}] ICE 收集完成`)
     }
   }
 
   // 3. 监听远程媒体轨道（Track）
   peerConnection.ontrack = (event) => {
-    console.log(`[WebRTC - ${member.userId}] 收到远程流 Track`, event.track.kind);
+    console.log(`[WebRTC - ${member.userId}] 收到远程流 Track`, event.track.kind)
     nextTick(() => {
       const remoteVideo = document.querySelector('#member_' + member.userId)
       if (remoteVideo) {
-        console.log(`[WebRTC - ${member.userId}] 将收到的流挂载到 video DOM 上`);
+        console.log(`[WebRTC - ${member.userId}] 将收到的流挂载到 video DOM 上`)
         remoteVideo.srcObject = event.streams[0]
       } else {
-        console.error(`[WebRTC - ${member.userId}] 未能在页面中找到 ID 为 #member_${member.userId} 的 video 节点！`);
+        console.error(
+          `[WebRTC - ${member.userId}] 未能在页面中找到 ID 为 #member_${member.userId} 的 video 节点！`
+        )
       }
-    });
+    })
   }
 
   // 4. 将本地所有音视频轨道添加到连接中发送给对方
   if (localStream) {
     localStream.getTracks().forEach((track) => {
-      console.log(`[WebRTC - ${member.userId}] 将本地 Track 添加到对等连接中:`, track.kind);
+      console.log(`[WebRTC - ${member.userId}] 将本地 Track 添加到对等连接中:`, track.kind)
       peerConnection.addTrack(track, localStream)
     })
   } else {
-    console.warn(`[WebRTC - ${member.userId}] 本地流为空，无法分享音视频！`);
+    console.warn(`[WebRTC - ${member.userId}] 本地流为空，无法分享音视频！`)
   }
 
   // 5. 缓存连接实例并返回
@@ -465,7 +470,7 @@ const sendOffer = async (peerConnection, sendUserId, receiveUserId) => {
 /**
  * 通过 Electron IPC 发送 P2P 信令消息
  */
-const sendPeerMessage = ({sendUserId, receiveUserId, signalType, signalData}) => {
+const sendPeerMessage = ({ sendUserId, receiveUserId, signalType, signalData }) => {
   window.electron.ipcRenderer.send('sendPeerConnection', {
     sendUserId,
     receiveUserId,
@@ -493,13 +498,13 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
   })
 
   if (!member) {
-    console.error(`[WebRTC] 找不到发送消息的用户: ${sendUserId}，忽略该信令。`);
-    return;
+    console.error(`[WebRTC] 找不到发送消息的用户: ${sendUserId}，忽略该信令。`)
+    return
   }
 
   const peerConnection = createPeerConnection(member)
 
-  console.log(`[信令交互 - 收到 ${sendUserId}] 信令类型: ${messageContent.signalType}`);
+  console.log(`[信令交互 - 收到 ${sendUserId}] 信令类型: ${messageContent.signalType}`)
 
   try {
     switch (messageContent.signalType) {
@@ -509,7 +514,7 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
         const answer = await peerConnection.createAnswer()
         await peerConnection.setLocalDescription(answer)
 
-        console.log(`[信令交互 - 收到 Offer] 发送给 ${sendUserId} 回复 Answer`);
+        console.log(`[信令交互 - 收到 Offer] 发送给 ${sendUserId} 回复 Answer`)
         sendPeerMessage({
           sendUserId: receiveUserId,
           receiveUserId: sendUserId,
@@ -519,11 +524,11 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
 
         // 执行在 offer 之前被压入队列的 candidate
         if (peerConnection.candidateQueue && peerConnection.candidateQueue.length > 0) {
-          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`);
+          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`)
           for (const c of peerConnection.candidateQueue) {
-            await peerConnection.addIceCandidate(c).catch(e => console.error(e));
+            await peerConnection.addIceCandidate(c).catch((e) => console.error(e))
           }
-          peerConnection.candidateQueue = [];
+          peerConnection.candidateQueue = []
         }
         break
       }
@@ -534,11 +539,11 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
 
         // 同样执行候选者队列
         if (peerConnection.candidateQueue && peerConnection.candidateQueue.length > 0) {
-          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`);
+          console.log(`[信令交互] 合并之前收到的 ${peerConnection.candidateQueue.length} 个候选者`)
           for (const c of peerConnection.candidateQueue) {
-            await peerConnection.addIceCandidate(c).catch(e => console.error(e));
+            await peerConnection.addIceCandidate(c).catch((e) => console.error(e))
           }
-          peerConnection.candidateQueue = [];
+          peerConnection.candidateQueue = []
         }
         break
       }
@@ -546,11 +551,11 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
       case SIGNAL_TYPE_CANDIDATE: {
         // 收到 Candidate：必须在 setRemoteDescription 之后才能添加
         if (!peerConnection.remoteDescription) {
-          console.log(`[信令交互 - ${sendUserId}] 未收到 Offer，先将 Candidate 放入队列`);
-          peerConnection.candidateQueue.push(signalData);
+          console.log(`[信令交互 - ${sendUserId}] 未收到 Offer，先将 Candidate 放入队列`)
+          peerConnection.candidateQueue.push(signalData)
           return
         }
-        await peerConnection.addIceCandidate(signalData).catch(e => console.error(e));
+        await peerConnection.addIceCandidate(signalData).catch((e) => console.error(e))
         break
       }
     }
@@ -691,7 +696,7 @@ const shareScreenHandler = async (_screenId) => {
   // 1. 发送视频状态变更信令，通知其他成员本地视频状态的变化
   sendOpenVideoChangeMessage(
     (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) ||
-    !proxy.Utils.isEmpty(_screenId)
+      !proxy.Utils.isEmpty(_screenId)
   )
 
   const oldScreenId = screenId.value
@@ -797,7 +802,7 @@ const selectMember = (userId, nickName, sex, openVideo) => {
   }
 
   // 3. 更新当前选中的用户 ID 状态
-  currentSelectUserId.value = userId;
+  currentSelectUserId.value = userId
 }
 
 onMounted(() => {

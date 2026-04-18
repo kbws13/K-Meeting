@@ -6,7 +6,7 @@ import router from '@/router'
 import '@/assets/icon/iconfont.css'
 import '@/assets/base.scss'
 
-import TitleBar from '@/components/TitleBar.vue'
+import TitleBar from '@/components/Titlebar.vue'
 import Header from '@/components/Header.vue'
 import NoData from '@/components/NoData.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -26,12 +26,12 @@ app.use(Pinia.createPinia())
 app.use(ElementPlus)
 app.use(router)
 
-app.component('Header', Header)
+app.component('AppHeader', Header)
 app.component('Titlebar', TitleBar)
 app.component('NoData', NoData)
-app.component('Dialog', Dialog)
+app.component('AppDialog', Dialog)
 app.component('Cover', Cover)
-app.component("Avatar", Avatar)
+app.component('Avatar', Avatar)
 
 app.config.globalProperties.Request = Request
 app.config.globalProperties.Api = Api
@@ -40,6 +40,6 @@ app.config.globalProperties.Verify = Verify
 app.config.globalProperties.Message = Message
 app.config.globalProperties.Confirm = Confirm
 app.config.globalProperties.Alert = Alert
-app.config.globalProperties.imageAccept = ".jpg,.png,.gif,.bmp,.webp";
+app.config.globalProperties.imageAccept = '.jpg,.png,.gif,.bmp,.webp'
 
 app.mount('#app')

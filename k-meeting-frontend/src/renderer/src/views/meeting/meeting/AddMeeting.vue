@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -52,10 +52,11 @@
         </el-radio-group>
       </el-form-item>
     </el-form>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import type { ScreenSource } from '@model/ipc'
 import { useUserInfoStore } from '../../../stores/UserInfoStore'
 import { getCurrentInstance, nextTick, ref } from 'vue'
 
@@ -116,7 +117,7 @@ const addMeeting = () => {
   })
 }
 
-const screenSources = ref([])
+const screenSources = ref<ScreenSource[]>([])
 
 /**
  * 弹窗显示初始化
@@ -168,11 +169,9 @@ defineExpose({
 .setting-panel {
   margin-bottom: 0px;
 
-  :deep {
-    .el-checkbox-group {
-      display: flex;
-      flex-direction: column;
-    }
+  :deep(.el-checkbox-group) {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

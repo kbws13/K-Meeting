@@ -28,13 +28,13 @@ let isDragging = false
 const startDrag = (e) => {
   isDragging = true
   // 在 document 上监听，确保鼠标移出分隔线范围时仍能捕捉移动
-  document.addEventListener("mousemove", onDrag);
-  document.addEventListener("mouseup", stopDrag);
-  e.preventDefault(); // 阻止默认的文本选择行为
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
+  e.preventDefault() // 阻止默认的文本选择行为
 }
 
 // 3. 定义事件分发
-const emit = defineEmits(["widthChange"])
+const emit = defineEmits(['widthChange'])
 
 /**
  * 拖拽进行中
@@ -79,17 +79,17 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .line {
-  cursor: w-resize;      // 鼠标悬停时显示为左右调整大小的指针
+  cursor: w-resize; // 鼠标悬停时显示为左右调整大小的指针
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  width: 8px;            // 分隔线的宽度
-  background: #ededed;   // 浅灰色背景
+  width: 8px; // 分隔线的宽度
+  background: #ededed; // 浅灰色背景
   position: relative;
 
   .iconfont {
-    font-size: 20px;     // 中间图标的大小
+    font-size: 20px; // 中间图标的大小
   }
 }
 </style>

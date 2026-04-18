@@ -1,5 +1,5 @@
 <template>
-  <Header :showBottomBorder="true"></Header>
+  <AppHeader :show-bottom-border="true"></AppHeader>
   <div class="body-panel">
     <div class="contact-user-panel">
       <div class="contact-user">

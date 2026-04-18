@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -29,7 +29,7 @@
         </el-transfer>
       </el-form-item>
     </el-form>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
@@ -108,14 +108,14 @@ const loadContactList = async () => {
 // 3. 表单数据与弹窗控制
 const formData = ref({
   selectContactIds: []
-});
+})
 
 /**
  * 暴露给外部调用的显示方法
  */
 const show = () => {
-  loadContactList();
-  dialogConfig.value.show = true;
+  loadContactList()
+  dialogConfig.value.show = true
   formData.value = {
     selectContactIds: []
   }

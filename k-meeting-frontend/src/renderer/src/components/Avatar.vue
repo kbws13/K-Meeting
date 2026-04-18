@@ -1,12 +1,6 @@
 <template>
   <div :style="{ width: width + 'px', height: width + 'px' }">
-    <Cover
-      :lazy="false"
-      :width="width"
-      :source="avatarUrl"
-      borderRadius="50%"
-      :scale="1"
-    ></Cover>
+    <Cover :lazy="false" :width="width" :source="avatarUrl" borderRadius="50%" :scale="1"></Cover>
   </div>
 </template>
 
@@ -54,6 +48,4 @@ defineExpose({
 })
 </script>
 
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

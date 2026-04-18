@@ -1,5 +1,5 @@
 <template>
-  <div class="header" :style="{ 'border-bottom': showBottomBorder ? '1px solid #ddd' : 'none'}">
+  <div class="header" :style="{ 'border-bottom': showBottomBorder ? '1px solid #ddd' : 'none' }">
     <div class="title" v-if="title">{{ title }}</div>
     <Titlebar :closeType="closeType" :showMax="showMax"></Titlebar>
   </div>
@@ -14,22 +14,19 @@ const router = useRouter()
 const route = useRoute()
 
 interface Props {
-  title: string,
-  showMax?: boolean;
-  showBottomBorder: boolean;
+  title: string
+  showMax?: boolean
+  showBottomBorder: boolean
   /** 0: 关闭, 1: 隐藏 */
-  closeType?: number;
+  closeType?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showMax: false,
   closeType: 1,
   showBottomBorder: false
-});
-
+})
 </script>
-
-
 
 <style scoped lang="scss">
 .header {

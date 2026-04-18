@@ -7,19 +7,21 @@
 <script lang="ts" setup>
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-
 import { useUserInfoStore } from './stores/UserInfoStore'
-import { getCurrentInstance, onMounted } from 'vue'
+import { onMounted } from 'vue'
+import { useAppProxy } from './composables/useAppProxy'
 
-const { proxy } = getCurrentInstance()
-
+const proxy = useAppProxy()
 const userInfoStore = useUserInfoStore()
-const saveUserInfoStore = async () => {
-  userInfoStore.setInfo(JSON.parse(localStorage.getItem('userInfo')) || {})
+
+const saveUserInfoStore = (): void => {
+  const rawUserInfo = localStorage.getItem('userInfo')
+  userInfoStore.setInfo(rawUserInfo ? JSON.parse(rawUserInfo) : {})
 }
 
-const onExitMeeting = () => {
-  window.electron.ipcRenderer.on('closeWindow', async (e, { windowId }) => {
+const onExitMeeting = (): void => {
+  window.electron.ipcRenderer.on('closeWindow', async (_event, payload) => {
+    const { windowId } = (payload ?? {}) as { windowId?: string }
     if (windowId === 'meeting') {
       await proxy.Request({
         url: proxy.Api.exitMeeting

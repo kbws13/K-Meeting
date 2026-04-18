@@ -1,5 +1,5 @@
 <template>
-  <Header :showBottomBorder="false" :showMax="true"></Header>
+  <AppHeader :show-bottom-border="false" :show-max="true"></AppHeader>
   <div class="body-panel">
     <div class="part-title">常规设置</div>
     <div class="part-content">
@@ -51,56 +51,62 @@
   </div>
   <UpdatePassword ref="updatePasswordRef"></UpdatePassword>
 
-  <AppUpdate :autoUpdate="false" ref="appUpdateRef"></AppUpdate>
+  <AppUpdate ref="appUpdateRef" :auto-update="false"></AppUpdate>
 </template>
 
 <script setup lang="ts">
+import type { SysSetting } from '@model/system'
 import UpdatePassword from './UpdatePassword.vue'
 import AppUpdate from '../AppUpdate.vue'
-import { getCurrentInstance, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAppProxy } from '@/composables/useAppProxy'
 
-const { proxy } = getCurrentInstance()
+const proxy = useAppProxy()
 const router = useRouter()
-const route = useRoute()
 
-const formData = ref({
+const formData = ref<SysSetting>({
+  openCamera: true,
+  openMic: true,
   screencapFolder: 'C:/Users/Administrator/.easymeeting/'
 })
-const formDataRef = ref()
 
-const getSysSetting = async () => {
-  formData.value = await window.electron.ipcRenderer.invoke('getSysSetting')
+const getSysSetting = async (): Promise<void> => {
+  const sysSetting = await window.electron.ipcRenderer.invoke<Partial<SysSetting>>('getSysSetting')
+  formData.value = {
+    ...formData.value,
+    ...sysSetting
+  }
 }
 getSysSetting()
 
-const saveSetting = async () => {
+const saveSetting = async (): Promise<void> => {
   await window.electron.ipcRenderer.invoke('saveSysSetting', JSON.stringify(formData.value))
 }
 
-const changeLocalFolder = async () => {
+const changeLocalFolder = async (): Promise<void> => {
   const localPath = await window.electron.ipcRenderer.invoke('changeLocalFolder', {
-    localPath: formData.value.screencapFolder.replaceAll('/', '\\')
+    localFilePath: formData.value.screencapFolder.replaceAll('/', '\\')
   })
   if (localPath) {
     formData.value.screencapFolder = localPath.replaceAll('\\', '/') + '/'
-    saveSetting()
+    await saveSetting()
   }
 }
 
-const openLocalFolder = () => {
+const openLocalFolder = (): void => {
   window.electron.ipcRenderer.send('openLocalFile', {
     localFilePath: formData.value.screencapFolder,
     folder: true
   })
 }
 
-const updatePasswordRef = ref()
-const updatePassword = () => {
-  updatePasswordRef.value.show()
+const updatePasswordRef = ref<{ show: () => void } | null>(null)
+const updatePassword = (): void => {
+  updatePasswordRef.value?.show()
 }
 
-const logout = () => {
+const logout = (): void => {
   proxy.Confirm({
     message: '确定要退出吗?',
     okfun: async () => {
@@ -120,9 +126,9 @@ const logout = () => {
   })
 }
 
-const appUpdateRef = ref()
-const checkUpdate = () => {
-  appUpdateRef.value.checkUpdate()
+const appUpdateRef = ref<{ checkUpdate: () => void } | null>(null)
+const checkUpdate = (): void => {
+  appUpdateRef.value?.checkUpdate()
 }
 </script>
 

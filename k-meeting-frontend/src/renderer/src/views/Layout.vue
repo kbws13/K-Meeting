@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '../stores/UserContactStore'
 import { mitter } from '../eventbus/eventBus'
@@ -70,13 +70,13 @@ const contactStore = useContactStore()
  * 菜单项接口定义
  */
 interface MenuItem {
-  name?: string;       // 菜单名称
-  icon: string;        // 图标
-  path?: string;       // 跳转路径
-  codes: string[];     // 权限代码
-  messageCount?: number; // 消息计数
-  onlyAdmin?: boolean; // 是否仅管理员可见
-  btnType?: string;    // 按钮类型（如管理后台）
+  name?: string // 菜单名称
+  icon: string // 图标
+  path?: string // 跳转路径
+  codes: string[] // 权限代码
+  messageCount?: number // 消息计数
+  onlyAdmin?: boolean // 是否仅管理员可见
+  btnType?: string // 按钮类型（如管理后台）
 }
 
 /**
@@ -88,23 +88,23 @@ const leftTopMenus = ref<MenuItem[]>([
     icon: 'video',
     path: '/meetingMain',
     codes: ['meeting'],
-    messageCount: 0,
+    messageCount: 0
   },
   {
     name: '通讯录',
     icon: 'contact',
     path: '/contact',
     codes: ['contact'],
-    messageCount: 0,
+    messageCount: 0
   },
   {
     name: '录制',
     icon: 'record',
     path: '/screencap',
     codes: ['screencap'],
-    messageCount: 0,
+    messageCount: 0
   }
-]);
+])
 
 /**
  * 左侧底部菜单数据（图片2）
@@ -114,15 +114,15 @@ const leftBottomMenus: MenuItem[] = [
     icon: 'settings',
     path: '/setting',
     codes: ['setting'],
-    onlyAdmin: false,
+    onlyAdmin: false
   },
   {
     icon: 'admin',
     codes: [],
     btnType: 'admin',
-    onlyAdmin: true,
+    onlyAdmin: true
   }
-];
+]
 
 const jumpMenu = (item: MenuItem) => {
   if (item.btnType === 'admin') {
@@ -133,7 +133,7 @@ const jumpMenu = (item: MenuItem) => {
 
 const listenMessage = () => {
   window.electron.ipcRenderer.on('mainMessage', (e, messageObj) => {
-    console.log("收到消息", messageObj)
+    console.log('收到消息', messageObj)
     switch (messageObj.messageType) {
       case 1: // 加入会议
         const newMember = messageObj.messageContent.newMember
@@ -143,7 +143,7 @@ const listenMessage = () => {
         }
         break
       case 3: // 退出会议
-              // 解析信令内容，获取退出状态和对应的用户 ID
+        // 解析信令内容，获取退出状态和对应的用户 ID
         const { exitStatus, exitUserId } = messageObj.messageContent
 
         // 状态定义参考：3-被踢出会议，4-被拉黑
@@ -164,7 +164,7 @@ const listenMessage = () => {
         contactStore.updateLastUpdateTime()
         break
       case 9: // 收到会议邀请
-              // 如果当前用户已经在会议中，则直接忽略邀请
+        // 如果当前用户已经在会议中，则直接忽略邀请
         if (meetingStore.inMeeting) {
           return
         }

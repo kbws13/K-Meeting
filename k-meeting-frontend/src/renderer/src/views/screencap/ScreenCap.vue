@@ -1,12 +1,12 @@
 <template>
-  <Header :showBottomBorder="true"></Header>
+  <AppHeader :show-bottom-border="true"></AppHeader>
   <div class="body-main">
     <template v-if="recordStatus == 0">
       <div class="setting-panel">
         <div>录制设置</div>
         <div class="device-panel">
           <div class="device-title">音频输入</div>
-          <MicIcon v-model="micInfo" ref="micInfoRef" @click="openOrClose"></MicIcon>
+          <MicIcon ref="micInfoRef" v-model="micInfo" @click="openOrClose"></MicIcon>
         </div>
         <div class="record-btn">
           <el-button class="btn" type="primary" size="large" @click="startRecord">
@@ -18,7 +18,7 @@
         <div class="screen-select">选择录制屏幕</div>
         <ScreenSelect
           ref="screenSelectRef"
-          @selectScreenDisplayId="screenDisplayIdHandler"
+          @select-screen-display-id="screenDisplayIdHandler"
         ></ScreenSelect>
       </div>
     </template>
@@ -28,14 +28,14 @@
 
         <div v-if="recordStatus == 3" class="status-tips">停止录制中,请稍后...</div>
 
-        <div class="recording-time" v-if="recordStatus == 2">
+        <div v-if="recordStatus == 2" class="recording-time">
           录制中：{{ proxy.Utils.convertSecondsToHMS(recordTime, true) }}
         </div>
 
         <div
+          v-if="recordStatus == 2"
           :class="['iconfont icon-stop', recordTime < 3 ? 'stop-disable' : '']"
           @click="stopRecord"
-          v-if="recordStatus == 2"
         >
           停止录制
         </div>

@@ -3,11 +3,25 @@ import {
   desktopCapturer,
   dialog,
   ipcMain,
-  IpcMainInvokeEvent,
   shell,
-  SourcesOptions
+  type OpenDialogOptions,
+  type SourcesOptions
 } from 'electron'
-import { delWindow, getWindow, saveWindow } from './windowProxy'
+import icon from '../../resources/icon.png?asset'
+import type {
+  ChangeLocalFolderPayload,
+  LoginSuccessPayload,
+  OpenLocalFilePayload,
+  OpenWindowPayload,
+  PeerConnectionPayload,
+  ScreenSource,
+  StartRecordingPayload,
+  WindowRouteParams,
+  WinOpPayload
+} from '@model/ipc'
+import type { SysSetting } from '@model/system'
+import type { PersistedUserInfo } from '@model/user'
+import { delWindow, getWindow, saveWindow, type ManagedBrowserWindow } from './windowProxy'
 import { initWs, logout, sendWsData } from './wsClient'
 import store from './store'
 import { startRecording, stopRecording } from './recording'
@@ -15,56 +29,70 @@ import { getSysSetting, saveSysSetting } from './sysSetting'
 import { is } from '@electron-toolkit/utils'
 import { join } from 'path'
 
-/**
- * 处理登录或注册窗口尺寸调整的函数
- */
-const onLoginOrRegister = (): void => {
-  // 使用 ipcMain.handle 处理渲染进程发来的异步调用
-  ipcMain.handle('loginOrRegister', (e: Electron.IpcMainInvokeEvent, isLogin: boolean): void => {
-    const login_width: number = 375
-    const login_height: number = 365
-    const register_height: number = 485
+const getMainWindow = (): ManagedBrowserWindow | undefined => {
+  return getWindow('main')
+}
 
-    // 获取主窗口实例，假设 getWindow 返回的是 BrowserWindow 或 null
-    const mainWindow = getWindow('main') as BrowserWindow | null
+const appendRouteParams = (routePath: string, data?: WindowRouteParams): string => {
+  if (!data) {
+    return routePath
+  }
 
-    if (mainWindow) {
-      // 1. 临时允许修改尺寸
-      mainWindow.setResizable(true)
-
-      // 2. 设置最小尺寸限制
-      mainWindow.setMinimumSize(login_width, login_height)
-
-      // 3. 根据状态切换窗口大小
-      if (isLogin) {
-        mainWindow.setSize(login_width, login_height)
-      } else {
-        mainWindow.setSize(login_width, register_height)
-      }
-
-      // 4. 锁定尺寸，禁止用户手动拖拽
-      mainWindow.setResizable(false)
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(data)) {
+    if (value != null) {
+      params.append(key, String(value))
     }
+  }
+
+  if (!params.size) {
+    return routePath
+  }
+
+  const separator = routePath.includes('?') ? '&' : '?'
+  return `${routePath}${separator}${params.toString()}`
+}
+
+const loadWindowRoute = async (window: BrowserWindow, routePath: string): Promise<void> => {
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    await window.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${routePath}`)
+    return
+  }
+
+  await window.loadFile(join(__dirname, '../renderer/index.html'), { hash: routePath })
+}
+
+const onLoginOrRegister = (): void => {
+  ipcMain.handle('loginOrRegister', (_event, isLogin: boolean): void => {
+    const loginWidth = 375
+    const loginHeight = 365
+    const registerHeight = 485
+    const mainWindow = getMainWindow()
+
+    if (!mainWindow) {
+      return
+    }
+
+    mainWindow.setResizable(true)
+    mainWindow.setMinimumSize(loginWidth, loginHeight)
+    mainWindow.setSize(loginWidth, isLogin ? loginHeight : registerHeight)
+    mainWindow.setResizable(false)
   })
 }
 
 const onWinTitleOp = (): void => {
   ipcMain.on('winTitleOp', (e: Electron.IpcMainEvent, { action, data }: WinOpPayload) => {
-    const webContents = e.sender
-    const win = BrowserWindow.fromWebContents(webContents)
-
-    // 严谨性检查：确保窗口实例存在
-    if (!win) return
+    const win = BrowserWindow.fromWebContents(e.sender) as ManagedBrowserWindow | null
+    if (!win) {
+      return
+    }
 
     switch (action) {
       case 'close':
-        if (data.closeType === 0) {
-          // forceClose 通常是自定义属性，用于在 close 事件监听中判断是否强制退出
-          // 在 TS 中通过 (win as any) 来允许添加非标准属性
-          ;(win as any).forceClose = data.forceClose
+        if (data?.closeType === 0) {
+          win.forceClose = data.forceClose
           win.close()
         } else {
-          // 隐藏窗口并从任务栏移除
           win.setSkipTaskbar(true)
           win.hide()
         }
@@ -82,9 +110,13 @@ const onWinTitleOp = (): void => {
   })
 }
 
-const onLoginSuccess = () => {
-  ipcMain.handle('loginSuccess', (e: Electron.IpcMainEvent, { userInfo, wsUrl }) => {
-    const mainWindow = getWindow('main') as BrowserWindow | null
+const onLoginSuccess = (): void => {
+  ipcMain.handle('loginSuccess', (_event, { userInfo, wsUrl }: LoginSuccessPayload): void => {
+    const mainWindow = getMainWindow()
+    if (!mainWindow) {
+      return
+    }
+
     mainWindow.setResizable(true)
     mainWindow.setMinimumSize(720, 480)
     mainWindow.setSize(720, 480)
@@ -95,231 +127,190 @@ const onLoginSuccess = () => {
   })
 }
 
-/**
- * 屏幕源信息接口
- */
-interface ScreenSource {
-  id: string
-  name: string
-  displayId: string
-  thumbnail: string
-}
-
-/**
- * 监听获取屏幕资源的 IPC 请求
- */
 const onGetScreenSource = (): void => {
-  // 使用 handle 监听，渲染进程通过 invoke 调用
   ipcMain.handle(
     'getScreenSource',
-    async (event: IpcMainInvokeEvent, opts: SourcesOptions): Promise<ScreenSource[]> => {
-      // 1. 调用 Electron 底层 API 获取屏幕和窗口资源
+    async (_event, opts: SourcesOptions): Promise<ScreenSource[]> => {
       const sources = await desktopCapturer.getSources(opts)
 
-      // 2. 过滤并格式化数据
       return sources
         .filter((source) => {
-          // 过滤掉尺寸过小（通常是无效或最小化窗口）的资源
           const size = source.thumbnail.getSize()
           return size.width > 10 && size.height > 10
         })
         .map((source) => ({
           id: source.id,
           name: source.name,
-          // 注意：底层字段名是 display_id，此处映射为前端易用的 camelCase
           displayId: source.display_id,
-          // 将 NativeImage 对象转换为 Base64 字符串，方便渲染进程直接在 <img> 或 <Cover> 中展示
           thumbnail: source.thumbnail.toDataURL()
         }))
     }
   )
 }
 
-const onStartRecoding = () => {
-  ipcMain.handle('startRecording', (e, { displayId, mic }) => {
+const onStartRecoding = (): void => {
+  ipcMain.handle('startRecording', (e, { displayId, mic }: StartRecordingPayload): void => {
     const sender = e.sender
     startRecording(sender, displayId, mic)
   })
 }
 
-const onStopRecording = () => {
+const onStopRecording = (): void => {
   ipcMain.handle('stopRecording', () => {
     stopRecording()
   })
 }
 
-const onOpenLocalFile = () => {
-  ipcMain.on('openLocalFile', (e: Electron.IpcMainEvent, { localFilePath, folder = false }) => {
-    if (folder) {
-      shell.openPath(localFilePath)
-    } else {
-      shell.showItemInFolder(localFilePath)
+const onOpenLocalFile = (): void => {
+  ipcMain.on(
+    'openLocalFile',
+    (_event: Electron.IpcMainEvent, { localFilePath, folder = false }: OpenLocalFilePayload) => {
+      if (folder) {
+        shell.openPath(localFilePath)
+      } else {
+        shell.showItemInFolder(localFilePath)
+      }
     }
-  })
+  )
 }
 
-const onSaveSysSetting = () => {
-  ipcMain.handle('saveSysSetting', (e: Electron.IpcMainEvent, sysSetting) => {
+const onSaveSysSetting = (): void => {
+  ipcMain.handle('saveSysSetting', (_event, sysSetting: string | SysSetting): void => {
     saveSysSetting(sysSetting)
   })
 }
 
-const onGetSysSetting = () => {
-  ipcMain.handle('getSysSetting', (e: Electron.IpcMainEvent, sysSetting) => {
+const onGetSysSetting = (): void => {
+  ipcMain.handle('getSysSetting', (): SysSetting => {
     return getSysSetting()
   })
 }
 
-const onChangeLocalFolder = () => {
-  ipcMain.handle('changeLocalFolder', async (e, { localFilePath }) => {
-    const option = {
-      properties: ['openDirectory'],
-      defaultPath: localFilePath
+const onChangeLocalFolder = (): void => {
+  ipcMain.handle(
+    'changeLocalFolder',
+    async (_event, { localFilePath }: ChangeLocalFolderPayload): Promise<string | undefined> => {
+      const option: OpenDialogOptions = {
+        properties: ['openDirectory'],
+        defaultPath: localFilePath
+      }
+
+      const result = await dialog.showOpenDialog(option)
+
+      if (result.canceled) {
+        return
+      }
+
+      const selectedPath = result.filePaths[0]
+      return process.platform === 'win32' ? selectedPath.replaceAll('/', '\\') : selectedPath
     }
-
-    // 调用 Electron 原生对话框让用户选择目录
-    let result = await dialog.showOpenDialog(option)
-
-    // 如果用户取消了选择，则直接返回
-    if (result.canceled) {
-      return
-    }
-
-    // 返回选中的第一个路径，并将路径中的正斜杠替换为反斜杠（通常用于 Windows 系统适配）
-    return result.filePaths[0].replaceAll('/', '\\')
-  })
+  )
 }
 
-const onLogout = () => {
+const onLogout = (): void => {
   ipcMain.handle('logout', () => {
     logout()
   })
 }
 
-const openWindow = ({
+const openWindow = async ({
   windowId,
   title = '详情',
-  path,
+  path: routePath,
   width = 960,
   height = 720,
   data,
   maximizable = false
-}) => {
+}: OpenWindowPayload): Promise<void> => {
+  const targetRoute = appendRouteParams(routePath, data)
   let newwindow = getWindow(windowId)
-  const paramsArray = []
 
-  // 1. URL 参数拼接逻辑
-  if (data && Object.keys(data).length > 0) {
-    // 检查 path 是否已有参数，没有则补 "?"，有则补 "&"
-    path = path.endsWith('?') ? path : path + '?'
-    for (let i in data) {
-      paramsArray.push(`${i}=${encodeURIComponent(data[i])}`)
-    }
-    path = path + paramsArray.join('&')
-  }
-
-  // 2. 创建新窗口实例
   if (!newwindow) {
-    newwindow = new BrowserWindow({
+    const createdWindow = new BrowserWindow({
+      title,
       width,
       height,
       minHeight: height,
       minWidth: width,
-      show: false, // 初始化不显示，等 ready-to-show 再显示，防止白屏
-      autoHideMenuBar: true, // 自动隐藏菜单栏
-      frame: false, // 无边框窗口
+      show: false,
+      autoHideMenuBar: true,
+      frame: false,
       fullscreenable: false,
       resizable: maximizable,
       maximizable,
-      // Linux 平台下特殊处理图标
       ...(process.platform === 'linux' ? { icon } : {}),
       webPreferences: {
-        preload: join(__dirname, '../preload/index.js'), // 注入预加载脚本
-        sandbox: false // 禁用沙箱以允许特定权限
+        preload: join(__dirname, '../preload/index.js'),
+        sandbox: false
+      }
+    }) as ManagedBrowserWindow
+
+    newwindow = createdWindow
+    saveWindow(windowId, createdWindow)
+    await loadWindowRoute(createdWindow, targetRoute)
+
+    createdWindow.on('ready-to-show', () => {
+      createdWindow.show()
+    })
+
+    createdWindow.on('close', (event) => {
+      if (createdWindow.forceClose !== undefined && !createdWindow.forceClose) {
+        notifyWindowPreClose(windowId)
+        event.preventDefault()
       }
     })
 
-    saveWindow(windowId, newwindow)
-    // 3. 根据环境加载内容
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      // 开发环境：加载 Vite/Webpack 的热更新地址
-      newwindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`)
-    } else {
-      // 生产环境：加载本地 HTML 文件
-      newwindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` })
-    }
-
-    // 4. 窗口生命周期监听
-    newwindow.on('ready-to-show', () => {
-      newwindow.show()
-    })
-
-    // 拦截关闭事件（实现点击关闭时隐藏窗口而非真正销毁，或执行清理逻辑）
-    newwindow.on('close', (event) => {
-      if (newwindow.forceClose !== undefined && !newwindow.forceClose) {
-        preCloseWindow(windowId)
-        event.preventDefault() // 阻止默认关闭行为
-      }
-    })
-
-    newwindow.on('closed', () => {
-      closewindow(windowId)
+    createdWindow.on('closed', () => {
+      closeWindow(windowId)
       delWindow(windowId)
     })
 
-    // 监听最大化/还原，通知渲染进程更新 UI（例如切换最大化图标）
-    newwindow.on('maximize', (e) => {
-      newwindow.webContents.send('winIsMax', true)
+    createdWindow.on('maximize', () => {
+      createdWindow.webContents.send('winIsMax', true)
     })
 
-    newwindow.on('unmaximize', (e) => {
-      newwindow.webContents.send('winIsMax', false)
+    createdWindow.on('unmaximize', () => {
+      createdWindow.webContents.send('winIsMax', false)
     })
   } else {
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      // 开发环境：加载 Vite/Webpack 的热更新地址
-      newwindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`)
-    } else {
-      // 生产环境：加载本地 HTML 文件
-      newwindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` })
-    }
-    newwindow.show()
-    newwindow.setSkipTaskbar(false)
+    const existingWindow = newwindow
+    await loadWindowRoute(existingWindow, targetRoute)
+    existingWindow.show()
+    existingWindow.setSkipTaskbar(false)
   }
 }
 
-const closewindow = (windowId) => {
-  const mainwindow = getWindow('main')
-  if (mainwindow) {
-    mainwindow.webContents.send('closeWindow', { windowId })
+const closeWindow = (windowId: string): void => {
+  const mainWindow = getMainWindow()
+  if (mainWindow) {
+    mainWindow.webContents.send('closeWindow', { windowId })
   }
 }
 
-const preCloseWindow = (windowId) => {
+const notifyWindowPreClose = (windowId: string): void => {
   const win = getWindow(windowId)
   if (win) {
     win.webContents.send('preCloseWindow')
   }
 }
 
-const onOpenWindow = () => {
-  ipcMain.on('openWindow', (e, { title, windowId, path, width, height, data, maximizable }) => {
-    openWindow({
-      title,
-      windowId,
-      path,
-      width,
-      height,
-      data,
-      maximizable
+const onOpenWindow = (): void => {
+  ipcMain.on('openWindow', (_event, payload: OpenWindowPayload) => {
+    void openWindow({
+      ...payload
     })
   })
 }
 
-const onSendPeerConnection = () => {
-  ipcMain.on('sendPeerConnection', (e, peerData) => {
-    peerData.token = store.getData('userInfo')?.token
-    sendWsData(JSON.stringify(peerData))
+const onSendPeerConnection = (): void => {
+  ipcMain.on('sendPeerConnection', (_event, peerData: PeerConnectionPayload) => {
+    const userInfo = store.getData<PersistedUserInfo>('userInfo')
+    sendWsData(
+      JSON.stringify({
+        ...peerData,
+        token: userInfo?.token
+      })
+    )
   })
 }
 

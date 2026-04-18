@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <AppDialog
     :show="dialogConfig.show"
     :title="dialogConfig.title"
     :buttons="dialogConfig.buttons"
@@ -13,19 +13,15 @@
         v-for="item in screenSources"
         @click="selectSource(item)"
       >
-        <Cover
-          :width="125"
-          :scale="0.6"
-          :source="item.thumbnail"
-          borderRadius="0px"
-        ></Cover>
+        <Cover :width="125" :scale="0.6" :source="item.thumbnail" borderRadius="0px"></Cover>
         <div class="name">{{ item.name }}</div>
       </div>
     </div>
-  </Dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import type { ScreenSource } from '@model/ipc'
 import { mitter } from '@/eventbus/eventBus.ts'
 import { nextTick, ref } from 'vue'
 
@@ -43,8 +39,8 @@ const dialogConfig = ref({
   ]
 })
 
-const screenSources = ref([])
-const screenSource = ref()
+const screenSources = ref<ScreenSource[]>([])
+const screenSource = ref<ScreenSource>()
 
 /**
  * 显示弹窗并加载屏幕资源
@@ -68,7 +64,7 @@ const show = () => {
 /**
  * 选择共享源
  */
-const selectSource = async (source) => {
+const selectSource = async (source: ScreenSource): Promise<void> => {
   screenSource.value = source
 }
 

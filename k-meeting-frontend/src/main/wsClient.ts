@@ -1,160 +1,134 @@
 import WebSocket from 'ws'
 import { getWindow, getWindowManage } from './windowProxy'
-import { BrowserWindow } from 'electron'
 
-// 定义变量类型
+interface WsMessagePayload {
+  messageType: number
+  [key: string]: unknown
+}
+
 let ws: WebSocket | null = null
-const maxRetries: number = 5
-const retryInterval: number = 2000
-let retryCount: number = 0
-const HEARTBEAT_INTERVAL: number = 5000
-let heartBeatTimer: any = null // 通常为 NodeJS.Timeout
+const maxRetries = 5
+const retryInterval = 2000
+let retryCount = 0
+const HEARTBEAT_INTERVAL = 5000
+let heartBeatTimer: NodeJS.Timeout | null = null
 let wsUrl: string | null = null
-let neetReconnect: boolean | null = null
+let needReconnect = false
 
-/**
- * 初始化 WebSocket
- * @param _wsUrl 连接地址
- */
+const parseWsMessage = (rawData: WebSocket.RawData): WsMessagePayload | null => {
+  try {
+    return JSON.parse(rawData.toString()) as WsMessagePayload
+  } catch (error) {
+    console.error('解析 websocket 消息失败:', error)
+    return null
+  }
+}
+
 const initWs = (_wsUrl: string): void => {
   wsUrl = _wsUrl
-  neetReconnect = true
+  needReconnect = true
   connectWs()
 }
 
-/**
- * 连接检查
- */
-const wsCheck = () => {
+const wsCheck = (): boolean => {
   return import.meta.env.VITE_WS_CHECK === 'true'
 }
 
-/**
- * 执行连接逻辑
- */
 const connectWs = (): void => {
-  // 检查是否已经处于连接或正在连接状态
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-    console.log('已经连接上')
+    return
+  }
+
+  if (!wsUrl) {
     return
   }
 
   console.log(`尝试连接....(重试次数:${retryCount}/${maxRetries}),连接地址:${wsUrl}`)
-
-  if (!wsUrl) return
-
   ws = new WebSocket(wsUrl)
 
   ws.onopen = () => {
-    // 如果是重连成功且开启了检查逻辑
     if (retryCount > 0 && wsCheck()) {
-      const mainwindow = getWindow('main')
-      if (mainwindow) {
-        // 通知渲染进程重连成功
-        mainwindow.webContents.send('reconnect', true)
-      }
+      getWindow('main')?.webContents.send('reconnect', true)
     }
 
     retryCount = 0
     console.log('websocket连接成功')
-
-    // 开启心跳检测
-    if (typeof startHeartBeat === 'function') {
-      startHeartBeat()
-    }
+    startHeartBeat()
   }
 
-  ws.onmessage = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
+  ws.onmessage = (event) => {
+    const data = parseWsMessage(event.data)
+    if (!data) {
+      return
+    }
+
     console.log('收到ws消息', data)
     const meetingWin = getWindow('meeting')
     const mainWin = getWindow('main')
+
     switch (data.messageType) {
-      case 1: // 加入房间
-      case 2: // 发送peer
-      case 3: // 退出房间
-        if (mainWin && (data.messageType == 1 || data.messageType == 3)) {
+      case 1:
+      case 2:
+      case 3:
+        if (mainWin && (data.messageType === 1 || data.messageType === 3)) {
           mainWin.webContents.send('mainMessage', data)
         }
-        if (meetingWin) {
-          meetingWin.webContents.send('meetingMessage', data)
-        }
+        meetingWin?.webContents.send('meetingMessage', data)
         break
-      case 8: // 好友申请
-      case 9: // 邀请入会
+      case 8:
+      case 9:
       case 10:
-        if (!mainWin) {
-          return
-        }
-        mainWin.webContents.send("mainMessage", data);
+      case 12:
+        mainWin?.webContents.send('mainMessage', data)
         break
       case 11:
-        if (!meetingWin) {
-          return
-        }
-        meetingWin.webContents.send('meetingMessage', data)
+        meetingWin?.webContents.send('meetingMessage', data)
         break
-      case 12: // 处理好友申请
-        if (!mainWin) {
-          return
-        }
-        mainWin.webContents.send('mainMessage', data)
+      default:
         break
     }
   }
 
   ws.onerror = () => {
-    // 发生错误时关闭连接，触发 onclose 进入重连逻辑
     ws?.close()
   }
 
   ws.onclose = () => {
-    // 清除心跳并尝试重连
     clearHeartbeatTimers()
+    ws = null
     handleReconnect()
   }
 }
 
-/**
- * 重连逻辑处理 (对应 图片 2)
- */
 const handleReconnect = (): void => {
-  // 如果不需要重连则直接返回
-  if (!neetReconnect) {
+  if (!needReconnect) {
     return
   }
 
-  // 检查重试次数是否超过最大限制
   if (retryCount >= maxRetries) {
     console.error('已经到达最大重试次数,停止重试')
     retryCount = 0
-    // 执行校验并退出登录（此处 wsCheck 假定为函数调用）
-    if (typeof wsCheck === 'function' && wsCheck()) {
+    if (wsCheck()) {
       logout(false)
     }
     return
   }
 
   retryCount += 1
-
-  // 图片 2 底部代码被截断，显示为 "const delay = netr"
-  // 按照常规逻辑，此处通常为延迟一段时间后调用 connectWs()
-  const delay: number = retryInterval * Math.pow(1.5, retryCount - 1) // 这是一个常见的指数退避或线性延迟逻辑
+  const delay = retryInterval * Math.pow(1.5, retryCount - 1)
   console.log(`连接断开，等待${delay / 1000}秒后重试`)
+
   if (wsCheck()) {
-    const mainWindow = getWindow('main')
-    mainWindow.webContents.send('reconnect', false)
+    getWindow('main')?.webContents.send('reconnect', false)
   }
+
   setTimeout(() => {
     connectWs()
   }, delay)
 }
 
-/**
- * 心跳机制逻辑 (对应 图片 3)
- */
 const startHeartBeat = (): void => {
-  // 定时发送心跳包
+  clearHeartbeatTimers()
   heartBeatTimer = setInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send('ping')
@@ -162,9 +136,6 @@ const startHeartBeat = (): void => {
   }, HEARTBEAT_INTERVAL)
 }
 
-/**
- * 清除心跳定时器 (对应 图片 3)
- */
 const clearHeartbeatTimers = (): void => {
   if (heartBeatTimer) {
     clearInterval(heartBeatTimer)
@@ -172,42 +143,43 @@ const clearHeartbeatTimers = (): void => {
   heartBeatTimer = null
 }
 
-const logout = (closeWs = true) => {
-  const login_width: number = 375
-  const login_height: number = 365
-
-  // 获取主窗口实例
-  const mainWindow = getWindow('main') as BrowserWindow | null
+const logout = (closeWs = true): void => {
+  const loginWidth = 375
+  const loginHeight = 365
+  const mainWindow = getWindow('main')
 
   if (closeWs) {
-    neetReconnect = false
+    needReconnect = false
     ws?.close()
+    ws = null
   }
 
-  // 关闭所有非主窗口
+  clearHeartbeatTimers()
+
   const windows = getWindowManage()
-  for (let winKey in windows) {
-    const win = windows[winKey]
+  for (const [winKey, win] of Object.entries(windows)) {
     if (winKey !== 'main') {
+      win.forceClose = true
       win.close()
     }
   }
 
-  if (mainWindow) {
-    // 切换回登录窗口大小
-    mainWindow.setResizable(true)
-    mainWindow.setMinimumSize(login_width, login_height)
-    mainWindow.setSize(login_width, login_height)
-    mainWindow.setResizable(false)
-    // 通知渲染进程执行登出
-    mainWindow.webContents.send('logout')
-  }
-}
-
-const sendWsData = (data: any): void => {
-  if (!ws) {
+  if (!mainWindow) {
     return
   }
+
+  mainWindow.setResizable(true)
+  mainWindow.setMinimumSize(loginWidth, loginHeight)
+  mainWindow.setSize(loginWidth, loginHeight)
+  mainWindow.setResizable(false)
+  mainWindow.webContents.send('logout')
+}
+
+const sendWsData = (data: string): void => {
+  if (ws?.readyState !== WebSocket.OPEN) {
+    return
+  }
+
   ws.send(data)
 }
 

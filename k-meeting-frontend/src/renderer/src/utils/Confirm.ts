@@ -26,11 +26,11 @@ const Confirm = ({
   cancelfun
 }: ConfirmParams): void => {
   ElMessageBox.confirm(message, '提示', {
-    'close-on-click-modal': false,
+    closeOnClickModal: false,
     confirmButtonText: okText,
     cancelButtonText: cancelText,
     showCancelButton: showCancelBtn,
-    showClose: showClose,
+    showClose,
     type: 'info'
   })
     .then(() => {

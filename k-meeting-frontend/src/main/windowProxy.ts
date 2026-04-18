@@ -1,18 +1,24 @@
-const windowManage = {}
+import type { BrowserWindow } from 'electron'
 
-const saveWindow = (id, window) => {
+export type ManagedBrowserWindow = BrowserWindow & {
+  forceClose?: boolean
+}
+
+const windowManage: Record<string, ManagedBrowserWindow> = {}
+
+const saveWindow = (id: string, window: ManagedBrowserWindow): void => {
   windowManage[id] = window
 }
 
-const getWindow = (id) => {
+const getWindow = (id: string): ManagedBrowserWindow | undefined => {
   return windowManage[id]
 }
 
-const delWindow = (id) => {
+const delWindow = (id: string): void => {
   delete windowManage[id]
 }
 
-const getWindowManage = () => {
+const getWindowManage = (): Record<string, ManagedBrowserWindow> => {
   return windowManage
 }
 

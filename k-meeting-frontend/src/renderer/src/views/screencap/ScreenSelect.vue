@@ -12,20 +12,8 @@
 </template>
 
 <script setup lang="ts">
+import type { ScreenSource } from '@model/ipc'
 import { onMounted, ref } from 'vue'
-
-// 1. 定义屏幕源的接口
-interface ThumbnailSize {
-  width: number
-  height: number
-}
-
-interface ScreenSource {
-  displayId: string | number
-  name: string
-  thumbnail: string // 通常是 base64 字符串
-  // 根据 Electron 文档，可能还包含 appIcon 等其他属性
-}
 
 // 2. 定义组件的 Emit 事件
 const emit = defineEmits<{

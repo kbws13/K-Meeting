@@ -1,20 +1,24 @@
 <template>
   <div>
-    <Header>
+    <AppHeader>
       <Titlebar
-        :showMax="true"
-        :closeType="0"
-        :styleTop="6"
-        :styleRight="10"
-        :borderRadius="5"
         ref="titlebarRef"
-        :forceClose="false"
+        :show-max="true"
+        :close-type="0"
+        :style-top="6"
+        :style-right="10"
+        :border-radius="5"
+        :force-close="false"
       ></Titlebar>
-    </Header>
+    </AppHeader>
     <template v-if="inited">
       <div class="meeting-panel">
         <div :class="['layout', LAYOUT_CLASS[layoutType]]">
-          <MemberList :deviceInfo="deviceInfo" @exitMeeting="forceExit" @selectMember="selectMemberHandler"></MemberList>
+          <MemberList
+            :device-info="deviceInfo"
+            @exit-meeting="forceExit"
+            @select-member="selectMemberHandler"
+          ></MemberList>
 
           <div
             v-show="layoutType != 0"
@@ -22,12 +26,12 @@
             :style="{ height: `calc(100vh - ${(layoutType == 1 ? 123 : 0) + 90}px)` }"
           >
             <video
+              v-show="openVideoRef"
+              ref="centerScreenRef"
               autoplay
               playsinline
               loop
               muted
-              ref="centerScreenRef"
-              v-show="openVideoRef"
             ></video>
 
             <div v-show="!openVideoRef" class="user-info">
@@ -40,22 +44,20 @@
         </div>
         <SplitLine
           v-show="memberOpened || chatOpened"
-          :initWidth="initRightWidth"
-          @widthChange="widthChange"
+          :init-width="initRightWidth"
+          @width-change="widthChange"
         ></SplitLine>
 
-        <div
-          v-show="memberOpened || chatOpened"
-          :style="{ width: rightWidth + 'px' }"
-        >
+        <div v-show="memberOpened || chatOpened" :style="{ width: rightWidth + 'px' }">
           <MemberPanel v-show="memberOpened" ref="memberPanelRef"></MemberPanel>
         </div>
       </div>
 
       <Footer
-        :deviceInfo="deviceInfo"
-        @openChat="openChatHandler"
-        @openMember="openMemberHandler"
+        :device-info="deviceInfo"
+        @open-chat="openChatHandler"
+        @open-member="openMemberHandler"
+        @update-device-info="updateDeviceInfo"
       ></Footer>
     </template>
     <template v-else>
@@ -66,6 +68,7 @@
 
 <script setup lang="ts">
 import Header from './Header.vue'
+import type { SysSetting } from '@model/system'
 import { getCurrentInstance, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { mitter } from '@/eventbus/eventBus'
 import Footer from './Footer.vue'
@@ -73,9 +76,7 @@ import MemberList from './MemberList.vue'
 import SplitLine from './SplitLine.vue'
 import MemberPanel from '../member/MemberPanel.vue'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
-import { useMeetingStore } from '@/stores/MeetingStore'
 const userInfoStore = useUserInfoStore()
-const meetingStore = useMeetingStore()
 
 const { proxy } = getCurrentInstance()
 
@@ -87,13 +88,17 @@ const deviceInfo = reactive({
   cameraOpen: false
 })
 
+const updateDeviceInfo = (patch: Partial<typeof deviceInfo>) => {
+  Object.assign(deviceInfo, patch)
+}
+
 const initEnv = async () => {
   // 1. 获取所有媒体设备并筛选出默认麦克风
   const devices = await navigator.mediaDevices.enumerateDevices()
   const defaultMic = devices.find((device) => device.kind == 'audioinput')
 
   // 2. 通过 IPC 从 Electron 主进程获取系统设置
-  const sysSetting = await window.electron.ipcRenderer.invoke('getSysSetting')
+  const sysSetting = await window.electron.ipcRenderer.invoke<SysSetting>('getSysSetting')
 
   // 3. 尝试获取摄像头媒体流以检测摄像头可用性
   const stream = await navigator.mediaDevices
