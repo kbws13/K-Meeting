@@ -50,6 +50,7 @@
 
         <div v-show="memberOpened || chatOpened" :style="{ width: rightWidth + 'px' }">
           <MemberPanel v-show="memberOpened" ref="memberPanelRef"></MemberPanel>
+          <ChatPanel v-show="chatOpened" ref="chatPanelRef"></ChatPanel>
         </div>
       </div>
 
@@ -76,6 +77,7 @@ import MemberList from './MemberList.vue'
 import SplitLine from './SplitLine.vue'
 import MemberPanel from '../member/MemberPanel.vue'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
+import ChatPanel from '../chat/ChatPanel.vue'
 const userInfoStore = useUserInfoStore()
 
 const { proxy } = getCurrentInstance()

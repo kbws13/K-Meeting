@@ -75,6 +75,14 @@ const connectWs = (): void => {
         }
         meetingWin?.webContents.send('meetingMessage', data)
         break
+      case 5: // 文本消息
+      case 6: // 媒体消息
+      case 7:
+        if (!meetingWin) {
+          return;
+        }
+        meetingWin.webContents.send("chatMessage", data);
+        break
       case 8:
       case 9:
       case 10:

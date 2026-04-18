@@ -9,7 +9,7 @@ const Api = {
   register: '/user/register', // 注册
   logout: '/user/logout', // 退出
   updatePassword: '/user/changePassword', // 修改密码
-  getSysSetting: '/account/getSysSetting', // 获取系统设置
+  getSysSetting: "/system/get", // 获取系统设置
   updateUserInfo: '/user/update', // 更新用户信息
 
   // --- 文件与资源 ---
@@ -36,7 +36,7 @@ const Api = {
   sendOpenVideoChangeMessage: '/meeting/sendOpenVideoChangeMessage', // 用户开启关闭摄像头
 
   // --- 聊天与消息 ---
-  sendChatMessage: '/chat/sendMessage', // 发送聊天消息
+  sendChatMessage: "/chat/send", // 发送聊天消息
   loadMessage: '/chat/loadMessage', // 聊天消息
   loadHistoryMessage: '/chat/loadHistoryMessage', // 获取历史聊天记录
 
