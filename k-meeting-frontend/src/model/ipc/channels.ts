@@ -72,5 +72,7 @@ export interface IpcOnPayloadMap {
   reconnect: boolean
   recordTime: number
   updateDownloadCallback: number
+  updateDownloadError: string
+  updateDownloadFinished: string
   winIsMax: boolean
 }

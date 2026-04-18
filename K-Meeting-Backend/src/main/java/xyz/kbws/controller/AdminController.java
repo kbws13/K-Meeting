@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import xyz.kbws.annotation.AuthCheck;
+import xyz.kbws.annotation.CurrentUser;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.common.ResultUtil;
@@ -17,6 +18,7 @@ import xyz.kbws.model.entity.Meeting;
 import xyz.kbws.model.query.MeetingQuery;
 import xyz.kbws.model.query.UserQuery;
 import xyz.kbws.model.vo.UserAdminVO;
+import xyz.kbws.redis.entity.LoginUser;
 import xyz.kbws.service.MeetingService;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.UserIdCodec;
@@ -53,16 +55,16 @@ public class AdminController {
     @ApiOperation(value = "修改用户状态")
     @PostMapping("/updateUserStatus")
     @AuthCheck(mustRole = UserConstant.admin)
-    public BaseResponse<Boolean> updateUserStatus(@NotEmpty String userId, @NotNull Integer status) {
-        Boolean res = userService.updateStatus(UserIdCodec.decode(userId), status);
+    public BaseResponse<Boolean> updateUserStatus(@CurrentUser LoginUser loginUser, @NotEmpty String userId, @NotNull Integer status) {
+        Boolean res = userService.updateStatus(loginUser.getUserId(), UserIdCodec.decode(userId), status);
         return ResultUtil.success(res);
     }
 
     @ApiOperation(value = "强制下线")
     @PostMapping("/forceOffLine")
     @AuthCheck(mustRole = UserConstant.admin)
-    public BaseResponse<Boolean> forceOffLine(@NotEmpty String userId) {
-        userService.forceOffLine(UserIdCodec.decode(userId));
+    public BaseResponse<Boolean> forceOffLine(@CurrentUser LoginUser loginUser, @NotEmpty String userId) {
+        userService.forceOffLine(loginUser.getUserId(), UserIdCodec.decode(userId));
         return ResultUtil.success(true);
     }
 

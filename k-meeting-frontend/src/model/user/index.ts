@@ -8,6 +8,7 @@ export interface AppUserInfo {
   nickName?: string
   sex?: number | string
   admin?: boolean
+  userRole?: string
   [key: string]: unknown
 }
 

@@ -16,6 +16,7 @@ import xyz.kbws.common.PageRequest;
 import xyz.kbws.config.AppConfig;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.constant.FileConstant;
+import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.ffmpeg.FFmpegComponent;
 import xyz.kbws.mapper.UserMapper;
@@ -179,7 +180,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public Boolean updateStatus(Integer userId, Integer status) {
+    public Boolean updateStatus(Integer currentUserId, Integer userId, Integer status) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户 ID 不能为空");
         }
@@ -188,10 +189,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户状态错误");
         }
 
-        User user = this.getById(userId);
-        if (user == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
-        }
+        User user = checkManageableUser(currentUserId, userId);
         if (status.equals(user.getStatus())) {
             return true;
         }
@@ -204,7 +202,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "修改用户状态失败");
         }
         if (UserStatusEnum.DISABLE.equals(userStatusEnum)) {
-            forceOffLine(userId);
+            doForceOffLine(userId);
         }
         return true;
     }
@@ -236,11 +234,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public void forceOffLine(Integer userId) {
+    public void forceOffLine(Integer currentUserId, Integer userId) {
+        User user = checkManageableUser(currentUserId, userId);
+        doForceOffLine(user.getId());
+    }
+
+    private User checkManageableUser(Integer currentUserId, Integer userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户 ID 不能为空");
+        }
         User user = this.getById(userId);
         if (user == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
         }
+        if (currentUserId != null && currentUserId.equals(userId)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "不能操作自己的账号");
+        }
+        if (UserConstant.admin.equals(user.getUserRole())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "不能操作管理员账号");
+        }
+        return user;
+    }
+
+    private void doForceOffLine(Integer userId) {
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
         messageSendDto.setMessageType(MessageTypeEnum.FORCE_OFF_LINE.getValue());
@@ -278,7 +294,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
     }
 }
-
 
 
 

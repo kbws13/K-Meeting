@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.common.ErrorCode;
@@ -56,8 +58,15 @@ public class AppUpdateController {
     @ApiOperation("保存更新记录")
     @PostMapping("/save")
     @AuthCheck(mustRole = UserConstant.admin)
-    public BaseResponse<Boolean> save(@RequestBody AppUpdate appUpdate) {
-        return ResultUtil.success(appUpdateService.saveAppUpdate(appUpdate));
+    public BaseResponse<Boolean> save(AppUpdate appUpdate, @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+        return ResultUtil.success(appUpdateService.saveAppUpdate(appUpdate, file));
+    }
+
+    @ApiOperation("删除更新记录")
+    @PostMapping("/delete")
+    @AuthCheck(mustRole = UserConstant.admin)
+    public BaseResponse<Boolean> delete(@NotNull Integer id) {
+        return ResultUtil.success(appUpdateService.deleteAppUpdate(id));
     }
 
     @ApiOperation("检查更新")

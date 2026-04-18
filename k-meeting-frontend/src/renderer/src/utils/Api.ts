@@ -57,17 +57,16 @@ const Api = {
   delMeetingReserve: '/meetingReserve/delMeetingReserve', // 创建人删除会议
 
   // --- 管理后台 ---
-  loadUserList: '/admin/loadUserList', // 用户列表
+  loadUserList: '/admin/loadUser', // 用户列表
   updateUserStatus: '/admin/updateUserStatus', // 修改用户状态
   forceOffLine: '/admin/forceOffLine', // 强制下线
-  loadUpdateDataList: '/admin/loadUpdateDataList', // 获取更新列表
-  delUpdate: '/admin/delUpdate', // 删除更新
-  saveUpdate: '/admin/saveUpdate', // 保存更新
-  postUpdate: '/admin/postUpdate', // 发布更新
-  getSysSetting4Admin: '/admin/getSysSetting', // 管理员获取系统设置
-  saveSysSetting: '/admin/saveSysSetting', // 保存设置
-  loadAdminMeeting: '/admin/loadAdminMeeting', // 获取会议
-  adminFinishMeeting: '/admin/adminFinishMeeting', // 管理员结束会议
+  loadUpdateDataList: '/appUpdate/load', // 获取更新列表
+  delUpdate: '/appUpdate/delete', // 删除更新
+  saveUpdate: '/appUpdate/save', // 保存更新
+  getSysSetting4Admin: '/system/get', // 管理员获取系统设置
+  saveSysSetting: '/system/save', // 保存设置
+  loadAdminMeeting: '/admin/loadMeeting', // 获取会议
+  adminFinishMeeting: '/admin/finishMeeting', // 管理员结束会议
 
   // --- 系统更新 ---
   checkVersion: '/update/checkVersion', // 更新检测

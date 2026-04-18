@@ -26,9 +26,9 @@ public interface UserService extends IService<User> {
 
     Page<UserAdminVO> findByPage(UserQuery userQuery);
 
-    Boolean updateStatus(Integer userId, Integer status);
+    Boolean updateStatus(Integer currentUserId, Integer userId, Integer status);
     
     UserVO updateUserInfo(MultipartFile avatar, User user) throws IOException;
 
-    void forceOffLine(Integer userId);
+    void forceOffLine(Integer currentUserId, Integer userId);
 }

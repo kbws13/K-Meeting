@@ -124,10 +124,24 @@ onMounted(() => {
   window.electron.ipcRenderer.on('updateDownloadCallback', (_event, loaded) => {
     downloadLoaded.value = loaded
   })
+
+  window.electron.ipcRenderer.on('updateDownloadError', (_event, message) => {
+    downloading.value = false
+    downloadLoaded.value = 0
+    proxy.Message.error(message)
+  })
+
+  window.electron.ipcRenderer.on('updateDownloadFinished', (_event, message) => {
+    downloading.value = false
+    showUpdate.value = false
+    proxy.Message.success(message)
+  })
 })
 
 onUnmounted(() => {
   window.electron.ipcRenderer.removeAllListeners('updateDownloadCallback')
+  window.electron.ipcRenderer.removeAllListeners('updateDownloadError')
+  window.electron.ipcRenderer.removeAllListeners('updateDownloadFinished')
 })
 
 defineExpose({

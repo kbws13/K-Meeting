@@ -160,7 +160,7 @@ const request = <T = unknown>(config: RequestParams): Promise<ResponseData<T> | 
     'X-Requested-With': 'XMLHttpRequest',
     token: token
   }
-  if (requestMethod !== 'get') {
+  if (requestMethod !== 'get' && !(requestBody instanceof FormData)) {
     headers['Content-Type'] = contentType
   }
 

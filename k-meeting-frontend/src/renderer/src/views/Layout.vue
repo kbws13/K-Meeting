@@ -34,7 +34,11 @@
         <template v-for="item in leftBottomMenus">
           <div
             :class="['menu-item', item.codes.includes(route.meta.code as string) ? 'active' : '']"
-            v-if="!item.onlyAdmin || (item.onlyAdmin && userInfoStore.userInfo.admin)"
+            v-if="
+              !item.onlyAdmin ||
+              (item.onlyAdmin &&
+                (userInfoStore.userInfo.admin || userInfoStore.userInfo.userRole === 'admin'))
+            "
             @click="jumpMenu(item)"
           >
             <div :class="['iconfont', 'icon-' + item.icon]"></div>
@@ -130,6 +134,13 @@ const leftBottomMenus: MenuItem[] = [
 
 const jumpMenu = (item: MenuItem): void => {
   if (item.btnType === 'admin' || !item.path) {
+    window.electron.ipcRenderer.send('openWindow', {
+      title: '管理后台',
+      windowId: 'adminWindow',
+      path: '/admin',
+      width: 1310,
+      height: 800
+    })
     return
   }
   void router.push(item.path)
@@ -164,6 +175,13 @@ const listenMessage = (): void => {
           }
         }
         break
+      case 4:
+        meetingStore.updateMeeting(false)
+        proxy.Confirm({
+          message: '会议已结束，你已退出会议',
+          showCancelBtn: false
+        })
+        break
       case 8:
         contactStore.updateLastUpdateTime()
         break
@@ -185,6 +203,12 @@ const listenMessage = (): void => {
             // 用户点击“接受邀请”后执行的回调函数
             acceptInvite(meetingId)
           }
+        })
+        break
+      case 10:
+        proxy.Alert('你已被管理员强制退出', async () => {
+          await window.electron.ipcRenderer.invoke('logout')
+          router.push('/')
         })
         break
       case 12:
@@ -280,7 +304,7 @@ onUnmounted(() => {
   .left {
     width: 64px;
     background: #f3f3f4;
-    margin: 0px auto;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -294,7 +318,7 @@ onUnmounted(() => {
         display: flex;
         justify-content: center;
         -webkit-app-region: no-drag;
-        margin: 40px 0px 20px 0px;
+        margin: 40px 0 20px 0;
       }
     }
 
@@ -323,13 +347,14 @@ onUnmounted(() => {
       }
 
       &:last-child {
-        margin-bottom: 0px;
+        margin-bottom: 0;
       }
 
       &.active {
         .iconfont {
           color: var(--blue);
         }
+
         .name {
           color: var(--blue);
         }
