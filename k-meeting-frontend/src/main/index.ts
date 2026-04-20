@@ -4,7 +4,9 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
 import {
-  onChangeLocalFolder, onDownloadUpdate,
+  onChangeLocalFolder,
+  onDownload,
+  onDownloadUpdate,
   onGetScreenSource,
   onGetSysSetting,
   onLoginOrRegister,
@@ -12,10 +14,12 @@ import {
   onLogout,
   onOpenLocalFile,
   onOpenWindow,
-  onSaveSysSetting, onSelectFile,
+  onSaveSysSetting,
+  onSelectFile,
   onSendPeerConnection,
   onStartRecoding,
-  onStopRecording, onUploadChatFile,
+  onStopRecording,
+  onUploadChatFile,
   onWinTitleOp
 } from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
@@ -135,6 +139,8 @@ onDownloadUpdate()
 onSelectFile()
 
 onUploadChatFile()
+
+onDownload()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

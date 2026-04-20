@@ -393,6 +393,89 @@ const onUploadChatFile = () => {
   });
 };
 
+/**
+ * 注册文件下载处理程序
+ */
+const onDownload = () => {
+  ipcMain.handle("download", async (event, { fileName, messageId, url, sendTime }) => {
+    // 1. 调用操作系统原生“另存为”对话框
+    const { filePath } = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+      title: "保存文件",
+      // 默认路径设置为系统下载目录 + 原文件名
+      defaultPath: path.join(app.getPath('downloads'), fileName),
+      properties: ["createDirectory"]
+    });
+
+    // 2. 如果用户关闭或取消了对话框，直接退出
+    if (!filePath) {
+      return;
+    }
+
+    // 3. 获取文件扩展名 (例如 .jpg, .zip)
+    const suffix = fileName.substring(fileName.lastIndexOf("."));
+
+    // 4. 执行实际的文件下载逻辑
+    downloadFile(messageId, sendTime, suffix, url, filePath);
+
+    // 5. 返回用户选择的保存路径
+    return filePath;
+  });
+};
+
+/**
+ * 流式下载文件处理程序
+ * @param {string|number} messageId - 关联的消息ID
+ * @param {string|number} sendTime - 消息发送时间
+ * @param {string} suffix - 文件后缀名
+ * @param {string} url - 下载请求地址
+ * @param {string} savePath - 本地保存路径
+ */
+const downloadFile = (messageId, sendTime, suffix, url, savePath) => {
+  const meetingWin = getWindow("meeting");
+
+  return new Promise(async (resolve, reject) => {
+    // 1. 发起流式下载请求
+    let response = await axios({
+      method: "post",
+      url: url,
+      responseType: "stream", // 关键：以流的形式接收响应
+      data: {
+        messageId,
+        sendTime,
+        suffix,
+        token: store.getData("userInfo")?.token
+      },
+      headers: {
+        'Content-type': 'multipart/form-data'
+      },
+      // 2. 监听下载进度
+      onDownloadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          // 将进度实时同步给前端“会议窗口”
+          if (meetingWin) {
+            meetingWin.webContents.send("downloadProgress", {
+              messageId,
+              percent,
+              localFilePath: savePath
+            });
+          }
+        }
+      }
+    });
+
+    // 3. 将响应数据流写入本地文件
+    const stream = fs.createWriteStream(savePath);
+    response.data.pipe(stream);
+
+    // 4. 监听写入完成事件
+    stream.on("finish", () => {
+      stream.close();
+      resolve(); // 完成 Promise
+    });
+  });
+};
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -410,4 +493,5 @@ export {
   onDownloadUpdate,
   onSelectFile,
   onUploadChatFile,
+  onDownload,
 }

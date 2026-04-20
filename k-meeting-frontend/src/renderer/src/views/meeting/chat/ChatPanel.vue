@@ -98,10 +98,41 @@ const listenUploadProgress = () => {
   })
 }
 
+/**
+ * 监听下载进度事件
+ */
+const listenDownloadProgress = () => {
+  // 监听来自 Electron 主进程的 'downloadProgress' 事件
+  window.electron.ipcRenderer.on('downloadProgress', (e, { messageId, percent, localFilePath }) => {
+    // 从数据源中查找匹配 messageId 的记录
+    const message = dataSource.value.list.find((item) => {
+      return item.messageId == messageId
+    })
+
+    // 如果消息不存在，则直接退出
+    if (!message) {
+      return
+    }
+
+    // 更新进度百分比 (用于触发 Vue 响应式 UI 更新)
+    message.downloadProgress = percent
+    // 更新本地文件保存路径 (用于后续点击“打开文件夹”)
+    message.localFilePath = localFilePath
+  })
+}
+
 // 组件挂载时注册消息监听
 onMounted(() => {
   listenMessage()
   listenUploadProgress()
+  listenDownloadProgress()
+})
+
+// 组件销毁前清理所有 'chatMessage' 监听器，防止内存泄漏
+onUnmounted(() => {
+  window.electron.ipcRenderer.removeAllListeners('chatMessage')
+  window.electron.ipcRenderer.removeAllListeners('uploadProgress')
+  window.electron.ipcRenderer.removeAllListeners('downloadProgress')
 })
 
 // 组件销毁前清理所有 'chatMessage' 监听器，防止内存泄漏

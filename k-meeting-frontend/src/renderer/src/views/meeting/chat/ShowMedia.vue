@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import 'viewerjs/dist/viewer.css'
+import Player from '@/components/Player.vue'
 import { component as Viewer } from 'v-viewer'
 import { getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -135,10 +136,12 @@ const next = (index) => {
   if (currentIndex.value + index < 0 || currentIndex.value + index >= allFileList.value.length) {
     return
   }
+  player.value.destroyPlayer()
   currentIndex.value = currentIndex.value + index
   getCurrentFile()
 }
 
+const player = ref()
 const currentIndex = ref(0)
 const allFileList = ref([])
 const currentFile = ref({ fileType: 0 })
@@ -157,8 +160,21 @@ const getCurrentFile = () => {
 
   // 如果是视频类型，预留视频播放处理逻辑
   if (curFile.fileType == 1) {
-    // TODO 视频播放相关初始化
+    player.value.showPlayer(url)
   }
+}
+
+/**
+ * 触发文件下载
+ */
+const download = async () => {
+  // 通过 IPC 调用主进程的下载功能，并传入下载所需的上下文信息
+  await window.electron.ipcRenderer.invoke('download', {
+    url: import.meta.env.VITE_DOMAIN + proxy.Api.downloadFile, // 拼接完整的下载接口地址
+    fileName: currentFile.value.fileName,                      // 目标文件名
+    messageId: currentFile.value.messageId,                    // 关联的消息 ID
+    sendTime: currentFile.value.sendTime                       // 消息发送时间，用于定位资源
+  })
 }
 
 /**

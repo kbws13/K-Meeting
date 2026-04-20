@@ -33,6 +33,38 @@ const props = defineProps({
     default: {}
   }
 })
+
+
+/**
+ * 触发文件下载逻辑
+ */
+const download = async () => {
+  // 调用 Electron 主进程进行“另存为”操作，并获取选定的保存路径
+  const savePath = await window.electron.ipcRenderer.invoke('download', {
+    url: import.meta.env.VITE_DOMAIN + proxy.Api.downloadFile, // 拼接后端下载接口地址
+    fileName: props.data.fileName,
+    messageId: props.data.messageId,
+    sendTime: props.data.sendTime
+  })
+
+  // 如果用户在对话框中取消保存，则停止后续操作
+  if (!savePath) {
+    return
+  }
+
+  // 初始化下载进度为 0，触发 UI 更新以显示进度条
+  props.data.downloadProgress = 0
+}
+
+/**
+ * 在本地打开已下载的文件
+ */
+const openLocalFile = () => {
+  // 通过 IPC 通知主进程调用系统的打开文件接口
+  window.electron.ipcRenderer.send('openLocalFile', {
+    localFilePath: props.data.localFilePath // 传入之前下载完成的文件路径
+  })
+}
 </script>
 
 <style lang="scss" scoped>
