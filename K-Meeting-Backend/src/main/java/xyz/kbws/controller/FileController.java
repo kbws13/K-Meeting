@@ -51,11 +51,13 @@ public class FileController {
         if (fileTypeEnum == FileTypeEnum.IMAGE) {
             response.setHeader("Cache-Control", "max-age=" + 30 * 24 * 60 * 60);
             response.setContentType("image/jpg");
+        } else if (fileTypeEnum == FileTypeEnum.VIDEO) {
+            response.setContentType("video/mp4");
         }
         readFile(response, range, filePath, thumbnail);
     }
 
-    @RequestMapping("/downloadFIle")
+    @RequestMapping("/downloadFile")
     @AuthCheck(mustRole = UserConstant.user)
     public void downloadFIle(HttpServletResponse response, @NotNull Long messageId, @NotNull Long sendTime, @NotEmpty String suffix) throws IOException {
         String month = DateUtil.format(new Date(sendTime), "yyyyMM");
@@ -129,7 +131,7 @@ public class FileController {
                     response.setHeader("Content-Length", "" + length);
                     response.setHeader("Content-Range", "bytes " + requestStart + "-" + requestEnd + "/" + contentLength);
                 } else {
-                    length = requestEnd - requestStart;
+                    length = contentLength - requestStart;
                     response.setHeader("Content-Length", "" + length);
                     response.setHeader("Content-Range", "bytes " + requestStart + "-" + (contentLength - 1) + "/" + contentLength);
                 }

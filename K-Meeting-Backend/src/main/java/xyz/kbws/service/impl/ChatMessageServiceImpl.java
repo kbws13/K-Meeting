@@ -346,7 +346,7 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
             fFmpegComponent.transferVideoType(tempFile, filePath, fileSuffix);
             fFmpegComponent.createImageThumbnail(filePath);
         } else {
-            filePath = filePath + fileSuffix;
+            filePath = filePath + '.' + fileSuffix;
             file.transferTo(new File(filePath));
         }
         ChatMessage updateEntity = new ChatMessage();
