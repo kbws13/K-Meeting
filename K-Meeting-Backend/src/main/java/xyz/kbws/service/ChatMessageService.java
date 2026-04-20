@@ -50,6 +50,6 @@ public interface ChatMessageService extends IService<ChatMessage> {
     int archiveExpiredMessages();
 
     void saveChatMessage(ChatMessage chatMessage);
-    
-    void uploadFile(MultipartFile file, Integer meetingId, Long messageId, Long sendTime) throws IOException;
+
+    void uploadFile(MultipartFile file, Integer meetingId, Long messageId, Long sendTime, Integer sendUserId) throws IOException;
 }

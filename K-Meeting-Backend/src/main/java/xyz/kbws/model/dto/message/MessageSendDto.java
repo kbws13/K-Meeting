@@ -30,7 +30,7 @@ public class MessageSendDto<T> implements Serializable {
 
     private Long sendTime;
 
-    private Integer messageId;
+    private Long messageId;
 
     private String fileName;
 

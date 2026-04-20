@@ -279,9 +279,9 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
         if (!ArrayUtil.contains(new Integer[]{MessageTypeEnum.CHAT_TEXT_MESSAGE.getValue(), MessageTypeEnum.CHAT_MEDIA_MESSAGE.getValue()}, chatMessage.getType())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // TODO 前端实际上是通过 receiveUserId == 0 去处理所有人的
-        // ReceiveTypeEnum receiveTypeEnum = ReceiveTypeEnum.getByValue(chatMessage.getReceiveType());
-        ReceiveTypeEnum receiveTypeEnum = chatMessage.getReceiveUserId() == 0 ? ReceiveTypeEnum.ALL : ReceiveTypeEnum.USER;        if (receiveTypeEnum == null) {
+        // 前端实际上是通过 receiveUserId == 0 去处理所有人的
+        ReceiveTypeEnum receiveTypeEnum = ReceiveTypeEnum.getByValue(chatMessage.getReceiveType());
+        if (receiveTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         if (receiveTypeEnum == ReceiveTypeEnum.USER && chatMessage.getReceiveUserId() == null) {
@@ -306,8 +306,8 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
         }
         MessageSendDto messageSendDto = BeanUtil.copyProperties(chatMessage, MessageSendDto.class);
         messageSendDto.setMessageContent(chatMessage.getContent());
-        // TODO 这里暂时设置消息类型为7
-        messageSendDto.setMessageType(MessageTypeEnum.CHAT_MEDIA_MESSAGE_UPDATE.getValue());
+        messageSendDto.setMessageType(chatMessage.getType());
+        messageSendDto.setMessageId(chatMessage.getId());
         if (ReceiveTypeEnum.USER == receiveTypeEnum) {
             messageSendDto.setMessageSend2Type(MessageSendTypeEnum.USER.getType());
             messageHandler.sendMessage(messageSendDto);
@@ -321,7 +321,7 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
     }
 
     @Override
-    public void uploadFile(MultipartFile file, Integer meetingId, Long messageId, Long sendTime) throws IOException {
+    public void uploadFile(MultipartFile file, Integer meetingId, Long messageId, Long sendTime, Integer sendUserId) throws IOException {
         String month = DateUtil.format(new Date(), "yyyyMM");
         String folder = appConfig.getProjectFolder() + FileConstant.FILE_FOLDER_FILE + month;
         File folderFile = new File(folder);
@@ -356,10 +356,12 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
 
         MessageSendDto<Object> messageSendDto = new MessageSendDto<>();
         messageSendDto.setMeetingId(meetingId);
-        messageSendDto.setMessageType(MessageTypeEnum.CHAT_MEDIA_MESSAGE.getValue());
-        messageSendDto.setMessageId(meetingId);
+        messageSendDto.setMessageType(MessageTypeEnum.CHAT_MEDIA_MESSAGE_UPDATE.getValue());
+        messageSendDto.setMessageId(messageId);
         messageSendDto.setStatus(MessageStatusEnum.SENT.getValue());
         messageSendDto.setMessageSend2Type(MessageSendTypeEnum.GROUP.getType());
+        messageSendDto.setSendTime(sendTime);
+        messageSendDto.setSendUserId(sendUserId);
         messageHandler.sendMessage(messageSendDto);
     }
 

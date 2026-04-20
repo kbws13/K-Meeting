@@ -51,7 +51,7 @@ public class FFmpegComponent {
     }
 
     public String getVideoCodec(String videoFilePath) {
-        final String CMD_GET_CODE = "ffprobe -v error -selec_streams v:0 -show_entries stream=codec_name \"%s\"";
+        final String CMD_GET_CODE = "ffprobe -v error -select_streams v:0 -show_entries stream=codec_name \"%s\"";
         String cmd = String.format(CMD_GET_CODE, videoFilePath);
         String result = ProcessUtil.executeCommand(cmd);
         result = result.substring(result.indexOf("=") + 1);

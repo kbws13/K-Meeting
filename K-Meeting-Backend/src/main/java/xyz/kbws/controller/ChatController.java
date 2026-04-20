@@ -52,7 +52,7 @@ public class ChatController {
     @ApiOperation("发送消息")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/send")
-    public BaseResponse<Boolean> send(@CurrentUser LoginUser loginUser, String message, @NotNull Integer messageType, @NotEmpty String receiveUserId, String fileName, Long fileSize, Integer fileType) {
+    public BaseResponse<ChatMessage> send(@CurrentUser LoginUser loginUser, String message, @NotNull Integer messageType, @NotEmpty String receiveUserId, String fileName, Long fileSize, Integer fileType) {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setMeetingId(loginUser.getCurrentMeetingId());
         chatMessage.setType(messageType);
@@ -62,24 +62,21 @@ public class ChatController {
         chatMessage.setFileType(fileType);
         chatMessage.setSendUserId(loginUser.getUserId());
         chatMessage.setSendUserNickName(loginUser.getNickName());
-        if (receiveUserId.equals("all")) {
-            chatMessage.setReceiveType(ReceiveTypeEnum.ALL.getValue());
-        } else {
-            chatMessage.setReceiveType(ReceiveTypeEnum.USER.getValue());
-            // TODO 这里暂时屏蔽混淆
-            // chatMessage.setReceiveUserId(UserIdCodec.decode(receiveUserId));
-            chatMessage.setReceiveUserId(Integer.parseInt(receiveUserId));
-        }
+        chatMessage.setReceiveType(receiveUserId.equals("0") ? ReceiveTypeEnum.ALL.getValue() : ReceiveTypeEnum.USER.getValue());
+
+        // TODO 这里暂时屏蔽混淆
+        // chatMessage.setReceiveUserId(UserIdCodec.decode(receiveUserId));
+        chatMessage.setReceiveUserId(Integer.parseInt(receiveUserId));
         chatMessageService.saveChatMessage(chatMessage);
-        return ResultUtil.success(true);
+        return ResultUtil.success(chatMessage);
     }
 
     @ApiOperation("上传聊天文件")
     @AuthCheck(mustRole = UserConstant.user)
     @PostMapping("/uploadFile")
-    public BaseResponse<Boolean> uploadFile(@CurrentUser LoginUser loginUser, MultipartFile file, @NotNull Long messageId, @NotEmpty Long sendTime) throws IOException {
+    public BaseResponse<Boolean> uploadFile(@CurrentUser LoginUser loginUser, @NotNull MultipartFile file, @NotNull Long messageId, @NotEmpty Long sendTime) throws IOException {
         getOwnedMessage(loginUser, messageId);
-        chatMessageService.uploadFile(file, loginUser.getCurrentMeetingId(), messageId, sendTime);
+        chatMessageService.uploadFile(file, loginUser.getCurrentMeetingId(), messageId, sendTime, loginUser.getUserId());
         return ResultUtil.success(true);
     }
 

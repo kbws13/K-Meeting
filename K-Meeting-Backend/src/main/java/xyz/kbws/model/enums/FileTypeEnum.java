@@ -11,8 +11,8 @@ import java.util.Arrays;
  */
 @Getter
 public enum FileTypeEnum {
-    IMAGE(0, new String[]{".jpeg", ".jpg", ".png", ".gif", ".bmp", ".webp"}, ".jpg", "图片"),
-    VIDEO(1, new String[]{".mp4", ".avi", ".rmvb", ".mkv", ".mov"}, ".mp4", "视频"),
+    IMAGE(0, new String[]{"jpeg", "jpg", "png", "gif", "bmp", "webp"}, ".jpg", "图片"),
+    VIDEO(1, new String[]{"mp4", "avi", "rmvb", "mkv", "mov"}, ".mp4", "视频"),
     ;
 
     private Integer value;

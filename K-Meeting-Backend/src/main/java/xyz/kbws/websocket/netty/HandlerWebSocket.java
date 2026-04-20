@@ -62,7 +62,7 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
         peerMessage.setSignalData(peerConnectDto.getSignalData());
 
         messageSendDto.setMessageContent(peerMessage);
-        messageSendDto.setMessageId(loginUser.getCurrentMeetingId());
+        messageSendDto.setMessageId(messageSendDto.getMessageId());
         messageSendDto.setSendUserId(loginUser.getUserId());
         // TODO 暂时停止混淆
         // messageSendDto.setReceiveUserId(UserIdCodec.decode(peerConnectDto.getReceiveUserId()));

@@ -52,8 +52,8 @@ public class ChatMessagePartitionManager {
         String idxSendTime = "idx_chatMessage_" + suffix + "_sendTime";
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute(buildCreateTableSql(tableName));
-            statement.execute("CREATE INDEX IF NOT EXISTS " + idxMeetingTime + " ON " + tableName + " (meetingId, sendTime)");
-            statement.execute("CREATE INDEX IF NOT EXISTS " + idxSendTime + " ON " + tableName + " (sendTime)");
+            statement.execute("CREATE INDEX IF NOT EXISTS " + idxMeetingTime + " ON " + tableName + " (meeting_id, send_time)");
+            statement.execute("CREATE INDEX IF NOT EXISTS " + idxSendTime + " ON " + tableName + " (send_time)");
         } catch (SQLException ex) {
             throw new IllegalStateException("创建 chatMessage 分表失败: " + tableName, ex);
         }
@@ -79,18 +79,18 @@ public class ChatMessagePartitionManager {
     private String buildCreateTableSql(String tableName) {
         return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                 + "id BIGINT PRIMARY KEY,"
-                + "meetingId INT NOT NULL,"
+                + "meeting_id INT NOT NULL,"
                 + "type TINYINT NOT NULL,"
                 + "content VARCHAR(500),"
-                + "sendUserId INT NOT NULL,"
-                + "sendUserNickName VARCHAR(20),"
-                + "sendTime BIGINT NOT NULL,"
-                + "receiveType TINYINT NOT NULL,"
-                + "receiveUserId INT,"
-                + "fileSize BIGINT,"
-                + "fileName VARCHAR(200),"
-                + "fileType TINYINT,"
-                + "fileSuffix VARCHAR(10),"
+                + "send_user_id INT NOT NULL,"
+                + "send_user_nick_name VARCHAR(20),"
+                + "send_time BIGINT NOT NULL,"
+                + "receive_type TINYINT NOT NULL,"
+                + "receive_user_id INT,"
+                + "file_size BIGINT,"
+                + "file_name VARCHAR(200),"
+                + "file_type TINYINT,"
+                + "file_suffix VARCHAR(10),"
                 + "status TINYINT"
                 + ")";
     }

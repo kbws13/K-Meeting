@@ -167,6 +167,9 @@ public class ChannelContextUtil {
             // TODO 暂时停止混淆
             payload.put("receiveUserId", messageSendDto.getReceiveUserId());
         }
+        if (messageSendDto.getMessageId() != null) {
+            payload.put("messageId", String.valueOf(messageSendDto.getMessageId()));
+        }
 
         Object messageContent = messageSendDto.getMessageContent();
         if (messageContent instanceof MeetingJoinObj) {
