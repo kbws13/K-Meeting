@@ -80,7 +80,11 @@ const router = createRouter({
           component: () => import('@/views/admin/system/SystemSetting.vue')
         }
       ]
-    }
+    },{
+      path: '/showMedia',
+      name: '媒体详情',
+      component: () => import('@/views/meeting/chat/ShowMedia.vue')
+    },
   ]
 })
 

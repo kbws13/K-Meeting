@@ -50,6 +50,7 @@
         v-model="message"
         resize="none"
         :rows="6"
+        @keydown.ctrl.enter.prevent="sendMessage"
       ></el-input>
     </div>
 
@@ -157,6 +158,67 @@ const sendMessagesDo = async ({
     callback(result.data)
   }
 }
+
+const getFileTypeByName = (fileName) => {
+  const fileSuffix = fileName.substr(fileName.lastIndexOf('.') + 1)
+  return getFileType(fileSuffix)
+}
+
+/**
+ * 上传文件处理流程
+ */
+const uploadFile = async () => {
+  // 1. 调用 Electron IPC 选择文件
+  const { filePath, fileName, fileSize } = await window.electron.ipcRenderer.invoke('selectFile');
+
+  // 如果用户取消了选择，直接返回
+  if (!filePath) {
+    return;
+  }
+
+  // 2. 基础校验：禁止上传空文件
+  if (fileSize === 0) {
+    proxy.Message.warning('空文件无法上传');
+    return;
+  }
+
+  // 3. 获取文件类型（0:图片, 1:视频, 2:其他文件）
+  const fileType = getFileTypeByName(fileName);
+
+  // 4. 根据文件类型进行大小限制校验
+  // 图片校验
+  if (fileType === 0 && fileSize > props.sysSetting.maxImageSize * 1024 * 1024) {
+    proxy.Message.error(`图片大小不能超过${props.sysSetting.maxImageSize}MB`);
+    return;
+  }
+  // 视频校验
+  if (fileType === 1 && fileSize > props.sysSetting.maxVideoSize * 1024 * 1024) {
+    proxy.Message.error(`视频大小不能超过${props.sysSetting.maxVideoSize}MB`);
+    return;
+  }
+  // 普通文件校验
+  if (fileType === 2 && fileSize > props.sysSetting.maxFileSize * 1024 * 1024) {
+    proxy.Message.error(`文件大小不能超过${props.sysSetting.maxFileSize}MB`);
+    return;
+  }
+
+  // 5. 调用发送接口
+  sendMessagesDo({
+    messageType: 6, // 假设 6 为文件消息类型
+    fileSize,
+    fileName,
+    fileType,
+    callback: ({ id, sendTime }) => {
+      // 6. 校验通过后，通过 IPC 通知主进程执行实际的上传操作
+      window.electron.ipcRenderer.send('uploadChatFile', {
+        uploadUrl: import.meta.env.VITE_DOMAIN + proxy.Api.uploadChatFile,
+        messageId: id,
+        sendTime,
+        filePath
+      });
+    }
+  });
+};
 </script>
 
 <style lang="scss" scoped>

@@ -181,8 +181,10 @@ const getResourcePath = ({
   fileType,
   sendTime
 }: ResourcePathParams): string => {
+  const token = getToken() || '';
+  // @ts-ignore
   const domain = import.meta.env.PROD ? import.meta.env.VITE_DOMAIN : ''
-  return `${domain}${Api.getResource}?messageId=${messageId}&fileType=${fileType}${thumbnail ? '&thumbnail=true' : ''}`
+  return `${domain}${Api.getResource}?token=${token}&messageId=${messageId}&sendTime=${sendTime}&fileType=${fileType}${thumbnail ? '&thumbnail=true' : ''}`
 }
 
 // 建议将 userId 转换为字符串，并确保 token 存在

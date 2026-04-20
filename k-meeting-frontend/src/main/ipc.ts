@@ -322,6 +322,77 @@ const onDownloadUpdate = () => {
   })
 }
 
+/**
+ * 注册文件选择的 IPC 处理程序
+ */
+const onSelectFile = () => {
+  ipcMain.handle('selectFile', async () => {
+    // 1. 打开原生文件选择对话框
+    const { canceled, filePaths } = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+      title: "选择文件",
+      properties: ['openFile']
+    });
+
+    // 2. 如果用户取消操作，返回空对象
+    if (canceled) {
+      return {};
+    }
+
+    // 3. 获取第一个选中的文件路径
+    const filePath = filePaths[0];
+
+    // 4. 获取文件统计信息（如文件大小）
+    const { size } = await fs.promises.stat(filePath);
+
+    // 5. 返回包含文件基本信息的对象
+    return {
+      fileName: path.basename(filePath), // 获取文件名（带扩展名）
+      fileSize: size,                    // 文件大小 (字节)
+      filePath                           // 完整路径
+    };
+  });
+};
+
+/**
+ * 注册文件上传 IPC 处理程序
+ */
+const onUploadChatFile = () => {
+  ipcMain.on("uploadChatFile", (e, { uploadUrl, messageId, sendTime, filePath }) => {
+    console.log(uploadUrl, messageId, sendTime, filePath);
+
+    // 获取会议窗口实例，用于后续向该窗口发送进度信息
+    const meetingWin = getWindow("meeting");
+
+    // 从本地存储获取用户令牌
+    const token = store.getData("userInfo")?.token;
+
+    // 执行文件上传请求
+    // 注意：在 Node.js (Electron 主进程) 中，原生的 Web FormData 不支持直接追加 Node.js Stream。
+    // 但 Axios ^1.2.0+ 提供了对对象属性的原生 multipart/form-data 序列化支持，并且完美兼容 Node.js Stream。
+    axios.post(uploadUrl, {
+      messageId: messageId,
+      sendTime: sendTime,
+      file: fs.createReadStream(filePath)
+    }, {
+      headers: { 'Content-Type': 'multipart/form-data', "token": token },
+      // 监听上传进度
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          // 计算上传百分比
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+
+          // 如果会议窗口存在，将进度同步回前端渲染页面
+          if (meetingWin) {
+            meetingWin.webContents.send("uploadProgress", { messageId, percent });
+          }
+        }
+      }
+    }).catch(error => {
+      console.error("文件上传失败", error);
+    });
+  });
+};
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
@@ -336,5 +407,7 @@ export {
   onLogout,
   onOpenWindow,
   onSendPeerConnection,
-  onDownloadUpdate
+  onDownloadUpdate,
+  onSelectFile,
+  onUploadChatFile,
 }

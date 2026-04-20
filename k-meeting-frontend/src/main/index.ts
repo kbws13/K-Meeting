@@ -12,10 +12,10 @@ import {
   onLogout,
   onOpenLocalFile,
   onOpenWindow,
-  onSaveSysSetting,
+  onSaveSysSetting, onSelectFile,
   onSendPeerConnection,
   onStartRecoding,
-  onStopRecording,
+  onStopRecording, onUploadChatFile,
   onWinTitleOp
 } from './ipc'
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions
@@ -131,6 +131,10 @@ onOpenWindow()
 onSendPeerConnection()
 
 onDownloadUpdate()
+
+onSelectFile()
+
+onUploadChatFile()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
